@@ -1,0 +1,449 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.wrap{padding:1rem 0}
+.tab-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.5rem}
+.tab{padding:6px 14px;border-radius:20px;border:0.5px solid var(--color-border-secondary);font-size:13px;cursor:pointer;background:var(--color-background-secondary);color:var(--color-text-secondary);transition:all .15s}
+.tab.active{background:var(--color-background-info);color:var(--color-text-info);border-color:var(--color-border-info)}
+.panel{display:none}.panel.active{display:block}
+
+/* Sprint cards */
+.sprint-grid{display:grid;grid-template-columns:1fr;gap:12px}
+.sprint{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1rem 1.25rem;position:relative;overflow:hidden}
+.sprint::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:2px 0 0 2px}
+.sprint.s1::before{background:#7F77DD}
+.sprint.s2::before{background:#1D9E75}
+.sprint.s3::before{background:#EF9F27}
+.sprint.s4::before{background:#E24B4A}
+.sprint.s5::before{background:#185FA5}
+.sprint-header{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.sprint-badge{font-size:11px;font-weight:500;padding:3px 10px;border-radius:12px;white-space:nowrap}
+.badge-purple{background:#EEEDFE;color:#3C3489}.badge-teal{background:#E1F5EE;color:#085041}
+.badge-amber{background:#FAEEDA;color:#633806}.badge-red{background:#FCEBEB;color:#791F1F}
+.badge-blue{background:#E6F1FB;color:#0C447C}
+.sprint-title{font-size:15px;font-weight:500;color:var(--color-text-primary)}
+.sprint-sub{font-size:12px;color:var(--color-text-secondary);margin-bottom:10px}
+.step-list{list-style:none;display:flex;flex-direction:column;gap:6px}
+.step-list li{display:flex;gap:8px;font-size:13px;color:var(--color-text-primary);line-height:1.5}
+.step-num{min-width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;margin-top:1px}
+.num-purple{background:#EEEDFE;color:#3C3489}.num-teal{background:#E1F5EE;color:#085041}
+.num-amber{background:#FAEEDA;color:#633806}.num-red{background:#FCEBEB;color:#791F1F}
+.num-blue{background:#E6F1FB;color:#0C447C}
+.code-pill{display:inline;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:4px;padding:1px 5px;font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary)}
+.hour-bar{display:flex;align-items:center;gap:8px;margin-top:10px}
+.hour-track{flex:1;height:6px;background:var(--color-background-secondary);border-radius:3px;overflow:hidden}
+.hour-fill{height:100%;border-radius:3px;transition:width .4s}
+.hour-label{font-size:11px;color:var(--color-text-secondary);min-width:48px;text-align:right}
+
+/* Flow diagram */
+.flow-svg{width:100%;overflow-x:auto}
+
+/* Arch grid */
+.arch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:1.5rem}
+.arch-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px 12px;cursor:pointer;transition:border-color .15s}
+.arch-card:hover{border-color:var(--color-border-primary)}
+.arch-card-label{font-size:11px;color:var(--color-text-secondary);margin-bottom:4px}
+.arch-card-title{font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px}
+.arch-card-stack{font-size:11px;font-family:var(--font-mono);color:var(--color-text-tertiary)}
+.detail-box{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:1rem;font-size:13px;color:var(--color-text-primary);line-height:1.7;min-height:60px;transition:opacity .2s}
+.detail-title{font-weight:500;font-size:14px;margin-bottom:8px;color:var(--color-text-primary)}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:500;border:0.5px solid}
+.tag-green{background:#EAF3DE;color:#3B6D11;border-color:#C0DD97}
+.tag-amber{background:#FAEEDA;color:#633806;border-color:#FAC775}
+.tag-red{background:#FCEBEB;color:#791F1F;border-color:#F7C1C1}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+
+/* timeline */
+.tl{position:relative;padding-left:28px}
+.tl::before{content:'';position:absolute;left:8px;top:4px;bottom:4px;width:1.5px;background:var(--color-border-secondary)}
+.tl-item{position:relative;margin-bottom:16px}
+.tl-dot{position:absolute;left:-24px;top:4px;width:12px;height:12px;border-radius:50%;border:2px solid}
+.tl-dot.purple{background:#EEEDFE;border-color:#7F77DD}
+.tl-dot.teal{background:#E1F5EE;border-color:#1D9E75}
+.tl-dot.amber{background:#FAEEDA;border-color:#EF9F27}
+.tl-dot.red{background:#FCEBEB;border-color:#E24B4A}
+.tl-dot.blue{background:#E6F1FB;border-color:#185FA5}
+.tl-label{font-size:12px;color:var(--color-text-secondary);margin-bottom:2px}
+.tl-title{font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:4px}
+.tl-desc{font-size:13px;color:var(--color-text-secondary);line-height:1.5}
+.ask-btn{display:inline-flex;align-items:center;gap:4px;font-size:12px;padding:4px 10px;border-radius:10px;border:0.5px solid var(--color-border-secondary);cursor:pointer;background:var(--color-background-secondary);color:var(--color-text-secondary);margin-top:6px}
+.ask-btn:hover{border-color:var(--color-border-primary);color:var(--color-text-primary)}
+</style>
+
+<div class="wrap">
+<h2 class="sr-only">ZT-SDX hackathon architecture and build order guide</h2>
+
+<div class="tab-bar">
+  <div class="tab active" onclick="show('sprints')">🏃 Build order</div>
+  <div class="tab" onclick="show('flow')">🔄 System flow</div>
+  <div class="tab" onclick="show('arch')">🧩 Components</div>
+  <div class="tab" onclick="show('timeline')">📅 4-day plan</div>
+</div>
+
+<!-- SPRINTS -->
+<div class="panel active" id="p-sprints">
+<div class="sprint-grid">
+
+<div class="sprint s1">
+  <div class="sprint-header">
+    <span class="sprint-badge badge-purple">Sprint 1 · Day 1 morning</span>
+    <span class="sprint-title">Database + skeleton</span>
+  </div>
+  <div class="sprint-sub">Everything else depends on this. Do it first.</div>
+  <ul class="step-list">
+    <li><span class="step-num num-purple">1</span>Init PostgreSQL schema — <span class="code-pill">users, roles, devices, sessions, files, shares, audit_logs</span></li>
+    <li><span class="step-num num-purple">2</span>Spin up Redis (Docker Compose) — OTP + session + revocation cache</li>
+    <li><span class="step-num num-purple">3</span>Spin up MinIO (Docker Compose) — create <span class="code-pill">files</span> bucket with versioning on</li>
+    <li><span class="step-num num-purple">4</span>FastAPI project scaffold — router files for <span class="code-pill">auth / files / shares / audit</span></li>
+    <li><span class="step-num num-purple">5</span>Health-check endpoint <span class="code-pill">GET /health</span> → verify all services respond</li>
+  </ul>
+  <div class="hour-bar"><div class="hour-track"><div class="hour-fill" style="width:30%;background:#7F77DD"></div></div><span class="hour-label">~3 hrs</span></div>
+</div>
+
+<div class="sprint s2">
+  <div class="sprint-header">
+    <span class="sprint-badge badge-teal">Sprint 2 · Day 1 afternoon</span>
+    <span class="sprint-title">Auth pipeline</span>
+  </div>
+  <div class="sprint-sub">Nothing works without login. Build the full auth chain end-to-end.</div>
+  <ul class="step-list">
+    <li><span class="step-num num-teal">1</span><span class="code-pill">POST /auth/login</span> — bcrypt verify, OTP send to email</li>
+    <li><span class="step-num num-teal">2</span><span class="code-pill">POST /auth/verify-otp</span> — check Redis OTP, capture device fingerprint</li>
+    <li><span class="step-num num-teal">3</span>Issue RS256 JWT (15-min) + opaque refresh token (8-hr, Redis-stored)</li>
+    <li><span class="step-num num-teal">4</span>JWT middleware — verify on every protected route, check revoked-JTI blacklist</li>
+    <li><span class="step-num num-teal">5</span>RBAC role decorator — <span class="code-pill">@require_role("admin")</span> guards on routes</li>
+    <li><span class="step-num num-teal">6</span><span class="code-pill">POST /auth/logout</span> — blacklist JTI in Redis</li>
+  </ul>
+  <div class="hour-bar"><div class="hour-track"><div class="hour-fill" style="width:40%;background:#1D9E75"></div></div><span class="hour-label">~4 hrs</span></div>
+</div>
+
+<div class="sprint s3">
+  <div class="sprint-header">
+    <span class="sprint-badge badge-amber">Sprint 3 · Day 2 morning</span>
+    <span class="sprint-title">File upload + crypto engine</span>
+  </div>
+  <div class="sprint-sub">The core value prop. Envelope encryption in-process, never plaintext to disk.</div>
+  <ul class="step-list">
+    <li><span class="step-num num-amber">1</span>Crypto helper — <span class="code-pill">generate_dek()</span>, <span class="code-pill">aes_gcm_encrypt(dek, file_bytes)</span></li>
+    <li><span class="step-num num-amber">2</span>Key wrap — <span class="code-pill">rsa_oaep_wrap(kek_pub, dek)</span> → store wrapped key + IV in DB</li>
+    <li><span class="step-num num-amber">3</span><span class="code-pill">POST /files/upload</span> — multipart → encrypt → PUT to MinIO → INSERT files record</li>
+    <li><span class="step-num num-amber">4</span>SHA-256 digest computed at upload; stored in <span class="code-pill">files.sha256</span></li>
+    <li><span class="step-num num-amber">5</span><span class="code-pill">GET /files/{id}</span> — fetch + unwrap DEK + decrypt stream → verify hash → serve</li>
+    <li><span class="step-num num-amber">6</span>Audit log write on every upload + download event</li>
+  </ul>
+  <div class="hour-bar"><div class="hour-track"><div class="hour-fill" style="width:45%;background:#EF9F27"></div></div><span class="hour-label">~4 hrs</span></div>
+</div>
+
+<div class="sprint s4">
+  <div class="sprint-header">
+    <span class="sprint-badge badge-red">Sprint 4 · Day 2 afternoon</span>
+    <span class="sprint-title">Share system + policy engine</span>
+  </div>
+  <div class="sprint-sub">This is what the demo hinges on. Build the full share-and-block loop.</div>
+  <ul class="step-list">
+    <li><span class="step-num num-red">1</span><span class="code-pill">POST /shares</span> — generate token, hash-store in DB, set Redis TTL, expiry + dl_limit</li>
+    <li><span class="step-num num-red">2</span>Device fingerprint lock — store fingerprint on first access, deny on mismatch</li>
+    <li><span class="step-num num-red">3</span><span class="code-pill">GET /dl/{token}</span> — validate token hash, decrement dl_remaining, deliver file</li>
+    <li><span class="step-num num-red">4</span><span class="code-pill">DELETE /shares/{id}</span> — instant revoke: Redis DEL + DB status=REVOKED</li>
+    <li><span class="step-num num-red">5</span>ABAC basic check — risk_score + device_trusted + time_window conditions</li>
+    <li><span class="step-num num-red">6</span>Watermark injection — embed user/token/timestamp into served PDF/image</li>
+  </ul>
+  <div class="hour-bar"><div class="hour-track"><div class="hour-fill" style="width:45%;background:#E24B4A"></div></div><span class="hour-label">~4 hrs</span></div>
+</div>
+
+<div class="sprint s5">
+  <div class="sprint-header">
+    <span class="sprint-badge badge-blue">Sprint 5 · Day 3</span>
+    <span class="sprint-title">Risk engine + frontend + demo</span>
+  </div>
+  <div class="sprint-sub">Make it visible and demonstrable. Risk scoring + React UI + drill rehearsal.</div>
+  <ul class="step-list">
+    <li><span class="step-num num-blue">1</span>Risk scorer — signal weights, cumulative score, MFA/deny thresholds (30/60/85)</li>
+    <li><span class="step-num num-blue">2</span>Alert table + Prometheus metric stubs (login_failures, policy_denials, dl_rate)</li>
+    <li><span class="step-num num-blue">3</span>React: Login → Dashboard → Upload → Share centre (minimal Tailwind)</li>
+    <li><span class="step-num num-blue">4</span>Admin panel: live audit log table, share revoke button, risk score badge</li>
+    <li><span class="step-num num-blue">5</span>Full demo dry-run: upload → share → vendor opens → forward blocked → admin traces</li>
+    <li><span class="step-num num-blue">6</span>Docker Compose final — one command boots everything for judges</li>
+  </ul>
+  <div class="hour-bar"><div class="hour-track"><div class="hour-fill" style="width:55%;background:#185FA5"></div></div><span class="hour-label">~6 hrs</span></div>
+</div>
+
+</div>
+<div style="margin-top:14px;padding:10px 14px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);font-size:13px;color:var(--color-text-secondary);line-height:1.6">
+  <strong style="color:var(--color-text-primary)">Day 4 (April 30):</strong> Buffer — fix blockers, polish demo, write a one-page README. Don't add features on the last day.
+</div>
+</div>
+
+<!-- FLOW -->
+<div class="panel" id="p-flow">
+<div class="flow-svg">
+<svg width="100%" viewBox="0 0 680 860" role="img">
+  <title>ZT-SDX full request flow</title>
+  <desc>Eight-layer flowchart showing how every file request passes through auth, policy, risk, crypto, storage, delivery, and audit layers</desc>
+  <defs>
+    <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <!-- Layer boxes -->
+  <!-- L1 User -->
+  <g class="c-gray">
+    <rect x="200" y="20" width="280" height="52" rx="8" stroke-width="0.5"/>
+    <text class="th" x="340" y="42" text-anchor="middle" dominant-baseline="central">User / client</text>
+    <text class="ts" x="340" y="60" text-anchor="middle" dominant-baseline="central">Browser · mobile · API call</text>
+  </g>
+
+  <line x1="340" y1="72" x2="340" y2="100" class="arr" marker-end="url(#arr2)" stroke="#888"/>
+  <text class="ts" x="356" y="90" fill="#888">HTTPS / TLS 1.3</text>
+
+  <!-- L2 Auth -->
+  <g class="c-purple">
+    <rect x="140" y="100" width="400" height="52" rx="8" stroke-width="0.5"/>
+    <text class="th" x="340" y="122" text-anchor="middle" dominant-baseline="central">Authentication layer</text>
+    <text class="ts" x="340" y="140" text-anchor="middle" dominant-baseline="central">JWT · OTP · MFA · device fingerprint</text>
+  </g>
+
+  <line x1="340" y1="152" x2="340" y2="180" class="arr" marker-end="url(#arr2)" stroke="#888"/>
+  <text class="ts" x="356" y="170" fill="#888">Signed JWT</text>
+
+  <!-- L3 Policy -->
+  <g class="c-teal">
+    <rect x="140" y="180" width="400" height="52" rx="8" stroke-width="0.5"/>
+    <text class="th" x="340" y="202" text-anchor="middle" dominant-baseline="central">Policy engine</text>
+    <text class="ts" x="340" y="220" text-anchor="middle" dominant-baseline="central">RBAC roles · ABAC context · default-deny</text>
+  </g>
+
+  <!-- Deny branch from Policy -->
+  <line x1="540" y1="206" x2="600" y2="206" class="arr" marker-end="url(#arr2)" stroke="#E24B4A"/>
+  <g class="c-red">
+    <rect x="600" y="185" width="68" height="42" rx="6" stroke-width="0.5"/>
+    <text class="th" x="634" y="206" text-anchor="middle" dominant-baseline="central">DENY</text>
+  </g>
+
+  <line x1="340" y1="232" x2="340" y2="260" class="arr" marker-end="url(#arr2)" stroke="#888"/>
+  <text class="ts" x="356" y="250" fill="#888">Policy decision</text>
+
+  <!-- L4 Risk -->
+  <g class="c-amber">
+    <rect x="140" y="260" width="400" height="52" rx="8" stroke-width="0.5"/>
+    <text class="th" x="340" y="282" text-anchor="middle" dominant-baseline="central">Risk engine</text>
+    <text class="ts" x="340" y="300" text-anchor="middle" dominant-baseline="central">Behaviour score · adaptive MFA · signals</text>
+  </g>
+
+  <!-- MFA branch from Risk -->
+  <line x1="540" y1="286" x2="600" y2="286" class="arr" marker-end="url(#arr2)" stroke="#EF9F27"/>
+  <g class="c-amber">
+    <rect x="600" y="265" width="68" height="42" rx="6" stroke-width="0.5"/>
+    <text class="th" x="634" y="286" text-anchor="middle" dominant-baseline="central">MFA</text>
+  </g>
+
+  <line x1="340" y1="312" x2="340" y2="340" class="arr" marker-end="url(#arr2)" stroke="#888"/>
+  <text class="ts" x="356" y="330" fill="#888">Risk score</text>
+
+  <!-- L5 KMS -->
+  <g class="c-blue">
+    <rect x="140" y="340" width="400" height="52" rx="8" stroke-width="0.5"/>
+    <text class="th" x="340" y="362" text-anchor="middle" dominant-baseline="central">Key management layer</text>
+    <text class="ts" x="340" y="380" text-anchor="middle" dominant-baseline="central">DEK generate · KEK wrap · RSA-OAEP</text>
+  </g>
+
+  <line x1="340" y1="392" x2="340" y2="420" class="arr" marker-end="url(#arr2)" stroke="#888"/>
+  <text class="ts" x="356" y="410" fill="#888">Wrapped DEK</text>
+
+  <!-- L6 Storage -->
+  <g class="c-teal">
+    <rect x="140" y="420" width="400" height="52" rx="8" stroke-width="0.5"/>
+    <text class="th" x="340" y="442" text-anchor="middle" dominant-baseline="central">Encrypted storage · MinIO</text>
+    <text class="ts" x="340" y="460" text-anchor="middle" dominant-baseline="central">AES-256-GCM ciphertext · SHA-256 digest</text>
+  </g>
+
+  <line x1="340" y1="472" x2="340" y2="500" class="arr" marker-end="url(#arr2)" stroke="#888"/>
+  <text class="ts" x="356" y="490" fill="#888">Encrypted stream</text>
+
+  <!-- L7 Delivery -->
+  <g class="c-purple">
+    <rect x="140" y="500" width="400" height="52" rx="8" stroke-width="0.5"/>
+    <text class="th" x="340" y="522" text-anchor="middle" dominant-baseline="central">Secure delivery layer</text>
+    <text class="ts" x="340" y="540" text-anchor="middle" dominant-baseline="central">In-memory decrypt · watermark · token gate</text>
+  </g>
+
+  <line x1="340" y1="552" x2="340" y2="580" class="arr" marker-end="url(#arr2)" stroke="#888"/>
+  <text class="ts" x="356" y="570" fill="#888">Decrypted file</text>
+
+  <!-- L8 Audit -->
+  <g class="c-gray">
+    <rect x="140" y="580" width="400" height="52" rx="8" stroke-width="0.5"/>
+    <text class="th" x="340" y="602" text-anchor="middle" dominant-baseline="central">Immutable audit ledger</text>
+    <text class="ts" x="340" y="620" text-anchor="middle" dominant-baseline="central">Hash-linked · append-only · tamper-evident</text>
+  </g>
+
+  <!-- Audit detail -->
+  <line x1="340" y1="632" x2="340" y2="660" class="arr" marker-end="url(#arr2)" stroke="#888"/>
+
+  <!-- Three audit outputs -->
+  <line x1="200" y1="660" x2="500" y2="660" stroke="var(--t)" stroke-width="0.5" opacity=".4"/>
+  <line x1="220" y1="660" x2="220" y2="680" class="arr" marker-end="url(#arr2)" stroke="#888"/>
+  <line x1="340" y1="660" x2="340" y2="680" class="arr" marker-end="url(#arr2)" stroke="#888"/>
+  <line x1="460" y1="660" x2="460" y2="680" class="arr" marker-end="url(#arr2)" stroke="#888"/>
+
+  <g class="c-gray"><rect x="140" y="680" width="160" height="44" rx="6" stroke-width="0.5"/>
+    <text class="ts" x="220" y="702" text-anchor="middle" dominant-baseline="central">PostgreSQL ledger</text></g>
+  <g class="c-gray"><rect x="260" y="680" width="160" height="44" rx="6" stroke-width="0.5"/>
+    <text class="ts" x="340" y="702" text-anchor="middle" dominant-baseline="central">Prometheus metrics</text></g>
+  <g class="c-gray"><rect x="380" y="680" width="160" height="44" rx="6" stroke-width="0.5"/>
+    <text class="ts" x="460" y="702" text-anchor="middle" dominant-baseline="central">Alert service</text></g>
+
+  <!-- Legend -->
+  <rect x="40" y="760" width="600" height="80" rx="8" fill="none" stroke="var(--t)" stroke-width="0.5" opacity=".3"/>
+  <text class="ts" x="60" y="780" opacity=".6">Colour key:</text>
+  <rect x="60" y="790" width="12" height="12" rx="3" class="c-purple"/><text class="ts" x="78" y="800">Auth / delivery</text>
+  <rect x="180" y="790" width="12" height="12" rx="3" class="c-teal"/><text class="ts" x="198" y="800">Policy / storage</text>
+  <rect x="310" y="790" width="12" height="12" rx="3" class="c-amber"/><text class="ts" x="328" y="800">Risk engine</text>
+  <rect x="420" y="790" width="12" height="12" rx="3" class="c-blue"/><text class="ts" x="438" y="800">Key management</text>
+  <rect x="548" y="790" width="12" height="12" rx="3" class="c-gray"/><text class="ts" x="566" y="800">Neutral</text>
+
+  <text class="ts" x="60" y="832" opacity=".5">Every request traverses all 8 layers. No layer can be bypassed.</text>
+</svg>
+</div>
+</div>
+
+<!-- ARCH -->
+<div class="panel" id="p-arch">
+<div class="arch-grid" id="arch-grid">
+  <div class="arch-card" onclick="showDetail(0)">
+    <div class="arch-card-label">Layer A</div>
+    <div class="arch-card-title">Frontend portal</div>
+    <div class="arch-card-stack">React · TS · Tailwind</div>
+  </div>
+  <div class="arch-card" onclick="showDetail(1)">
+    <div class="arch-card-label">Layer B</div>
+    <div class="arch-card-title">Backend API</div>
+    <div class="arch-card-stack">FastAPI · Python 3.12</div>
+  </div>
+  <div class="arch-card" onclick="showDetail(2)">
+    <div class="arch-card-label">Layer C</div>
+    <div class="arch-card-title">PostgreSQL</div>
+    <div class="arch-card-stack">11 tables · PgBouncer</div>
+  </div>
+  <div class="arch-card" onclick="showDetail(3)">
+    <div class="arch-card-label">Layer D</div>
+    <div class="arch-card-title">MinIO storage</div>
+    <div class="arch-card-stack">AES-256 blobs only</div>
+  </div>
+  <div class="arch-card" onclick="showDetail(4)">
+    <div class="arch-card-label">Layer E</div>
+    <div class="arch-card-title">Redis cache</div>
+    <div class="arch-card-stack">OTP · sessions · revoke</div>
+  </div>
+  <div class="arch-card" onclick="showDetail(5)">
+    <div class="arch-card-label">Layer F</div>
+    <div class="arch-card-title">Monitoring</div>
+    <div class="arch-card-stack">Prometheus · Grafana</div>
+  </div>
+  <div class="arch-card" onclick="showDetail(6)">
+    <div class="arch-card-label">Security</div>
+    <div class="arch-card-title">Risk engine</div>
+    <div class="arch-card-stack">Signals · thresholds</div>
+  </div>
+  <div class="arch-card" onclick="showDetail(7)">
+    <div class="arch-card-label">Security</div>
+    <div class="arch-card-title">DLP scanner</div>
+    <div class="arch-card-stack">PAN · Aadhaar · secrets</div>
+  </div>
+</div>
+<div class="detail-box" id="detail-box">
+  <div style="color:var(--color-text-tertiary);font-size:13px">Click a component to see implementation details and what to build first.</div>
+</div>
+</div>
+
+<!-- TIMELINE -->
+<div class="panel" id="p-timeline">
+<div class="tl">
+  <div class="tl-item">
+    <div class="tl-dot purple"></div>
+    <div class="tl-label">April 27 · Day 1 morning</div>
+    <div class="tl-title">Project scaffold + DB schema</div>
+    <div class="tl-desc">Docker Compose with Postgres, Redis, MinIO. Run migrations. Verify all containers healthy. FastAPI scaffold with router stubs.</div>
+    <button class="ask-btn" onclick="sendPrompt('Give me the Docker Compose file and Postgres schema SQL for ZT-SDX')">Generate Docker Compose + SQL ↗</button>
+  </div>
+  <div class="tl-item">
+    <div class="tl-dot teal"></div>
+    <div class="tl-label">April 27 · Day 1 afternoon</div>
+    <div class="tl-title">Full auth pipeline</div>
+    <div class="tl-desc">Login → OTP → device fingerprint → JWT → refresh → logout. JWT middleware on all protected routes. Test with curl.</div>
+    <button class="ask-btn" onclick="sendPrompt('Write the FastAPI auth endpoints for ZT-SDX: login, verify-otp, refresh, logout with JWT and Redis')">Write auth endpoints ↗</button>
+  </div>
+  <div class="tl-item">
+    <div class="tl-dot amber"></div>
+    <div class="tl-label">April 28 · Day 2 morning</div>
+    <div class="tl-title">Crypto engine + file upload/download</div>
+    <div class="tl-desc">AES-256-GCM encrypt, RSA-OAEP key wrap, MinIO PUT, SHA-256 digest. Download: unwrap → decrypt stream → verify hash.</div>
+    <button class="ask-btn" onclick="sendPrompt('Write the Python crypto engine for ZT-SDX: AES-256-GCM encrypt/decrypt and RSA-OAEP key wrap/unwrap')">Write crypto engine ↗</button>
+  </div>
+  <div class="tl-item">
+    <div class="tl-dot red"></div>
+    <div class="tl-label">April 28 · Day 2 afternoon</div>
+    <div class="tl-title">Share system + ABAC policy engine</div>
+    <div class="tl-desc">Share token generation, device-lock, expiry, download counter, instant revocation. Basic ABAC: role + risk + device + time.</div>
+    <button class="ask-btn" onclick="sendPrompt('Write the FastAPI share endpoints and basic ABAC policy engine for ZT-SDX')">Write share + policy ↗</button>
+  </div>
+  <div class="tl-item">
+    <div class="tl-dot blue"></div>
+    <div class="tl-label">April 29 · Day 3</div>
+    <div class="tl-title">Risk engine + React UI + demo prep</div>
+    <div class="tl-desc">Risk scorer with signal weights. React pages: login, upload, share centre, admin audit viewer. Full demo dry-run × 2.</div>
+    <button class="ask-btn" onclick="sendPrompt('Write the risk scoring engine for ZT-SDX with signal weights and MFA/deny thresholds')">Write risk engine ↗</button>
+  </div>
+  <div class="tl-item">
+    <div class="tl-dot purple"></div>
+    <div class="tl-label">April 30 · Day 4</div>
+    <div class="tl-title">Buffer + polish</div>
+    <div class="tl-desc">Fix any blockers. One-command Docker Compose boot. README with demo script. Do not add new features.</div>
+    <button class="ask-btn" onclick="sendPrompt('Write a concise demo script for the ZT-SDX hackathon presentation covering all 5 acts')">Write demo script ↗</button>
+  </div>
+</div>
+
+<div style="margin-top:1.5rem;padding:12px 14px;background:var(--color-background-secondary);border-radius:var(--border-radius-md)">
+  <div class="tags">
+    <span class="tag tag-green">May 1 is the deadline</span>
+    <span class="tag tag-amber">4 working days</span>
+    <span class="tag tag-red">No scope creep after Day 3</span>
+  </div>
+  <div style="font-size:13px;color:var(--color-text-secondary);line-height:1.6">
+    If you hit blockers: drop DLP scanner first (mention it as "planned"), then Grafana dashboards (show Prometheus raw), then watermarking. The demo must always work end-to-end.
+  </div>
+</div>
+</div>
+
+</div>
+
+<script>
+const details = [
+  {title:"Frontend portal — what to build",tags:["React 18","TypeScript","Tailwind CSS"],body:`Build these pages in order: (1) Login + OTP form. (2) Dashboard with file list. (3) Upload drag-drop with sensitivity selector. (4) Share centre with expiry/limit controls. (5) Admin audit log table. Use React Query for server state, Zustand for client state. Store JWT in HttpOnly cookies — never localStorage.`},
+  {title:"Backend API — what to build",tags:["FastAPI","Python 3.12","Pydantic v2"],body:`Router files: auth.py, files.py, shares.py, audit.py. Add JWT middleware first — everything else depends on it. Use async SQLAlchemy for DB. PgBouncer in front of Postgres for connection pooling. Rate-limit auth endpoints with slowapi (Redis sliding window).`},
+  {title:"PostgreSQL — schema priority",tags:["users","sessions","files","shares","audit_logs"],body:`Create tables in this order: users → devices → roles → sessions → files → shares → audit_logs. audit_logs must be INSERT-only at the DB role level (REVOKE UPDATE, DELETE from api_user on audit_logs). Add indexes on: files.owner_id, shares.token_hash, audit_logs.actor.`},
+  {title:"MinIO — setup steps",tags:["AES-256-GCM","Versioning ON","No plaintext"],body:`1. Create bucket: zt-sdx-files with versioning enabled. 2. Set lifecycle rule: delete old versions after 90 days. 3. Create service account with PutObject + GetObject only (no DeleteObject for the API user). 4. Enable TLS in MinIO config. 5. Pre-sign URLs with 60s expiry — never expose the raw MinIO URL.`},
+  {title:"Redis — key structure",tags:["otp:{uid}","session:{sid}","revoked:{jti}","share:{hash}"],body:`otp:{user_id} TTL=5min → OTP code. session:{session_id} TTL=8hr → session JSON. revoked:{jti} TTL=7days → '1' (presence check). share:{token_hash} TTL=dynamic → share metadata JSON. risk:{user_id} TTL=30min → cached score. Use Redis Sentinel (3 nodes) for HA even in hackathon — just add to Docker Compose.`},
+  {title:"Monitoring — minimal viable setup",tags:["Prometheus","Grafana","4 key metrics"],body:`For the hackathon, expose 4 Prometheus metrics from FastAPI: auth_login_failures_total, file_download_total, policy_denial_total, risk_score_gauge. Import the FastAPI Prometheus middleware (prometheus-fastapi-instrumentator). One Grafana dashboard with 4 panels. Use Grafana's pre-built Docker image — zero config needed.`},
+  {title:"Risk engine — implementation",tags:["Score 0–100","Thresholds: 30/60/85"],body:`Compute score per-request: start at 0, add signal weights (new device +25, odd hour +20, new geo +30, rapid downloads +40, failed MFA +15). Cache in Redis with 30-min TTL. Decision: <30 allow, 30–60 force MFA step-up, 60–85 deny+alert, >85 terminate all sessions. Run as a FastAPI dependency injected into protected routes.`},
+  {title:"DLP scanner — implementation",tags:["Async","Post-upload","Quarantine-first"],body:`Files start in QUARANTINED status. DLP runs async (background task in FastAPI). Scan decrypted bytes in-memory: regex for PAN (Luhn), Aadhaar (12-digit Verhoeff), common secret prefixes (AKIA, sk-, ghp_). On clean: update files.status=CLEAN. On match: status=QUARANTINED, raise COMPLIANCE_ALERT. If you run out of time: stub DLP, always return CLEAN, mark as "TODO" in README.`},
+];
+
+function showDetail(i) {
+  const d = details[i];
+  const box = document.getElementById('detail-box');
+  box.innerHTML = `<div class="detail-title">${d.title}</div><div class="tags">${d.tags.map(t=>`<span class="tag tag-green">${t}</span>`).join('')}</div><div style="font-size:13px;color:var(--color-text-secondary);line-height:1.7">${d.body}</div>`;
+  document.querySelectorAll('.arch-card').forEach((c,j)=>{
+    c.style.borderColor = j===i ? 'var(--color-border-info)' : '';
+  });
+}
+
+function show(id) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+</script>
