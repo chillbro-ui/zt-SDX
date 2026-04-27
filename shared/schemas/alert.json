@@ -1,0 +1,9 @@
+{
+  "id": "uuid",
+  "type": "string",
+  "severity": "enum",
+  "actor": "uuid",
+  "score_delta": "integer",
+  "details": "text",
+  "created_at": "timestamp"
+}

@@ -1,0 +1,11 @@
+{
+  "id": "uuid",
+  "file_id": "uuid",
+  "token_hash": "string",
+  "recipient": "string",
+  "expiry": "timestamp",
+  "downloads_left": "integer",
+  "device_lock": "boolean",
+  "watermark": "boolean",
+  "status": "enum"
+}

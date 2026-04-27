@@ -1,0 +1,13 @@
+{
+  "Share": {
+    "id": "string",
+    "file_id": "string",
+    "token": "string",
+    "recipient": "string",
+    "expiry": "datetime",
+    "downloads_left": "number",
+    "device_lock": "boolean",
+    "watermark": "boolean",
+    "status": "ACTIVE | EXPIRED | REVOKED | EXHAUSTED"
+  }
+}

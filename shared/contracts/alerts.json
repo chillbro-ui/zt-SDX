@@ -1,0 +1,11 @@
+{
+  "Alert": {
+    "id": "string",
+    "type": "string",
+    "severity": "LOW | MEDIUM | HIGH | CRITICAL",
+    "actor": "string",
+    "score_delta": "number",
+    "details": "string",
+    "created_at": "datetime"
+  }
+}

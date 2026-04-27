@@ -1,0 +1,11 @@
+{
+  "id": "uuid",
+  "actor": "uuid",
+  "action": "string",
+  "resource": "string",
+  "ip": "string",
+  "result": "enum",
+  "prev_hash": "string",
+  "hash": "string",
+  "created_at": "timestamp"
+}

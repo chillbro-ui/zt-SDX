@@ -1,0 +1,10 @@
+{
+  "Policy": {
+    "id": "string",
+    "role": "string",
+    "resource_sensitivity": "string[]",
+    "device_trusted": "boolean",
+    "risk_score_lt": "number",
+    "action": "ALLOW | DENY | MFA"
+  }
+}

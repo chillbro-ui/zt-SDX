@@ -1,0 +1,14 @@
+{
+  "id": "uuid",
+  "email": "string",
+  "password_hash": "string",
+  "role": "enum",
+  "department": "string",
+  "clearance_level": "integer",
+  "device_trust": "integer",
+  "risk_score": "integer",
+  "mfa_enabled": "boolean",
+  "status": "enum",
+  "created_at": "timestamp",
+  "updated_at": "timestamp"
+}

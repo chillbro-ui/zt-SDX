@@ -1,0 +1,13 @@
+{
+  "id": "uuid",
+  "owner_id": "uuid",
+  "filename": "string",
+  "stored_name": "string",
+  "mime_type": "string",
+  "size": "bigint",
+  "sha256": "string",
+  "sensitivity": "enum",
+  "status": "enum",
+  "risk_score": "integer",
+  "created_at": "timestamp"
+}

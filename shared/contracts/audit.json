@@ -1,0 +1,13 @@
+{
+  "AuditEvent": {
+    "id": "string",
+    "actor": "string",
+    "action": "string",
+    "resource": "string",
+    "ip": "string",
+    "result": "ALLOWED | DENIED | MFA_REQUIRED",
+    "prev_hash": "string",
+    "hash": "string",
+    "timestamp": "datetime"
+  }
+}

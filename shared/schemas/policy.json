@@ -1,0 +1,8 @@
+{
+  "id": "uuid",
+  "role": "string",
+  "resource_sensitivity": "string[]",
+  "device_trusted": "boolean",
+  "risk_score_lt": "integer",
+  "action": "enum"
+}

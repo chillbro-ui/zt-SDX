@@ -1,0 +1,14 @@
+{
+  "FileMetadata": {
+    "id": "string",
+    "owner_id": "string",
+    "filename": "string",
+    "size": "number",
+    "mime_type": "string",
+    "sha256": "string",
+    "sensitivity": "PUBLIC | INTERNAL | CONFIDENTIAL | SECRET",
+    "status": "QUARANTINED | SCANNING | CLEAN | BLOCKED",
+    "risk_score": "number",
+    "created_at": "datetime"
+  }
+}

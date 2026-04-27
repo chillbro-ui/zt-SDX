@@ -1,0 +1,13 @@
+{
+  "User": {
+    "id": "string",
+    "name": "string",
+    "email": "string",
+    "role": "ADMIN | SECURITY_OFFICER | DEPARTMENT_HEAD | EMPLOYEE | VENDOR | GUEST",
+    "department": "string",
+    "clearance_level": "number",
+    "device_trust": "number",
+    "risk_score": "number",
+    "status": "ACTIVE | LOCKED | REVOKED"
+  }
+}
