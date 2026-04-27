@@ -1,0 +1,10 @@
+fastapi
+uvicorn[standard]
+redis
+psycopg2-binary
+pydantic
+httpx
+boto3
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
