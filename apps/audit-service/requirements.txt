@@ -6,6 +6,7 @@ pydantic
 httpx
 boto3
 python-jose[cryptography]
-passlib[bcrypt]
+passlib[argon2]
+argon2-cffi
 python-multipart
 sqlalchemy
