@@ -1,0 +1,5 @@
+AUTH_URL = "http://auth-service:8000"
+POLICY_URL = "http://policy-service:8000"
+FILE_URL = "http://file-service:8000"
+AUDIT_URL = "http://audit-service:8000"
+RISK_URL = "http://risk-service:8000"

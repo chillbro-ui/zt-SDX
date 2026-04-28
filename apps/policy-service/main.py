@@ -1,7 +1,12 @@
 from fastapi import FastAPI
 import uvicorn
 
+from app.api.policy_routes import router as policy_router
+
 app = FastAPI(title="policy-service")
+
+
+app.include_router(policy_router)
 
 
 @app.get("/")

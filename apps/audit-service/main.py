@@ -1,8 +1,11 @@
 from fastapi import FastAPI
 import uvicorn
 
+from app.api.audit_routes import router as audit_router
+
 app = FastAPI(title="audit-service")
 
+app.include_router(audit_router)
 
 @app.get("/")
 def root():

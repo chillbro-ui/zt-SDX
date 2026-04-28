@@ -1,8 +1,9 @@
 from fastapi import FastAPI
 import uvicorn
+from app.api.file_routes import router as file_router
 
 app = FastAPI(title="file-service")
-
+app.include_router(file_router)
 
 @app.get("/")
 def root():
