@@ -3,12 +3,12 @@ services:
     image: postgres:17
     container_name: zt-postgres
     env_file:
-      - ../../.env
+      - .env
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ../postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./infra/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   redis:
     image: redis:8-alpine
@@ -16,14 +16,14 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - ../redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./infra/redis/redis.conf:/usr/local/etc/redis/redis.conf
     command: redis-server /usr/local/etc/redis/redis.conf
 
   minio:
     image: minio/minio
     container_name: zt-minio
     env_file:
-      - ../../.env
+      - .env
     command: server /data --console-address ":9001"
     ports:
       - "9000:9000"
@@ -32,10 +32,10 @@ services:
       - minio_data:/data
 
   gateway-api:
-    build: ../../apps/gateway-api
-    env_file:
-      - ../../.env
+    build: ./apps/gateway-api
     container_name: zt-gateway
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     depends_on:
@@ -43,10 +43,10 @@ services:
       - redis
 
   auth-service:
-    build: ../../apps/auth-service
-    env_file:
-      - ../../.env
+    build: ./apps/auth-service
     container_name: zt-auth
+    env_file:
+      - .env
     ports:
       - "8001:8000"
     depends_on:
@@ -54,60 +54,62 @@ services:
       - redis
 
   policy-service:
-    build: ../../apps/policy-service
-    env_file:
-      - ../../.env
+    build: ./apps/policy-service
     container_name: zt-policy
+    env_file:
+      - .env
     ports:
       - "8002:8000"
+    depends_on:
+      - postgres
 
   file-service:
-    build: ../../apps/file-service
-    env_file:
-      - ../../.env
+    build: ./apps/file-service
     container_name: zt-file
+    env_file:
+      - .env
     ports:
       - "8003:8000"
     depends_on:
-      - minio
       - postgres
+      - minio
 
   audit-service:
-    build: ../../apps/audit-service
-    env_file:
-      - ../../.env
+    build: ./apps/audit-service
     container_name: zt-audit
+    env_file:
+      - .env
     ports:
       - "8004:8000"
     depends_on:
       - postgres
 
   risk-service:
-    build: ../../apps/risk-service
-    env_file:
-      - ../../.env
+    build: ./apps/risk-service
     container_name: zt-risk
+    env_file:
+      - .env
     ports:
       - "8005:8000"
     depends_on:
-      - redis
       - postgres
+      - redis
 
   worker-service:
-    build: ../../apps/worker-service
-    env_file:
-      - ../../.env
+    build: ./apps/worker-service
     container_name: zt-worker
+    env_file:
+      - .env
     depends_on:
+      - postgres
       - redis
       - minio
-      - postgres
 
   frontend:
-    build: ../../apps/frontend
-    env_file:
-      - ../../.env
+    build: ./apps/frontend
     container_name: zt-frontend
+    env_file:
+      - .env
     ports:
       - "5173:5173"
     depends_on:
