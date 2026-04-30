@@ -1,0 +1,52 @@
+
+=== gateway ===
+{"service":"gateway-api","status":"healthy","cors_origins":["http://localhost:5173"]}
+
+=== auth ===
+{"service":"auth-service","status":"healthy"}
+
+=== policy ===
+{"service":"policy-service","status":"healthy"}
+
+=== file ===
+{"service":"file-service","status":"healthy"}
+
+=== audit ===
+{"service":"audit-service","status":"healthy"}
+
+=== risk ===
+{"service":"risk-service","status":"healthy"}
+
+=== alert ===
+
+
+=== seed_policies ===
+{"created":[],"skipped":["SUPER_ADMIN","SECURITY_ADMIN","DEPT_HEAD","MANAGER","EMPLOYEE","AUDITOR"]}
+
+=== register ===
+{"detail":"Email already registered"}
+
+=== login ===
+{"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhOWQ2NTQ1OC04ZTNlLTRiNWMtYWFlOS04ODBhZTNkNzIxZTciLCJlbWFpbCI6ImFsaWNlQGFjbWUuY29tIiwicm9sZSI6IkVNUExPWUVFIiwib3JnX2lkIjpudWxsLCJzZXNzaW9uX2lkIjoiNjBkOThhM2YtMTZlNy00ZjA1LTg2MjctMWNjYWE0ZTczNDU3IiwiZXhwIjoxNzc3NTkwMjE1fQ.2AZjfQiaoG3VLyUfNwExq3R9jLatJ2gA8JYzFw1WYI4","refresh_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhOWQ2NTQ1OC04ZTNlLTRiNWMtYWFlOS04ODBhZTNkNzIxZTciLCJzZXNzaW9uX2lkIjoiNjBkOThhM2YtMTZlNy00ZjA1LTg2MjctMWNjYWE0ZTczNDU3IiwiZXhwIjoxNzc3NjE4MTE1LCJ0eXBlIjoicmVmcmVzaCJ9.PMtIo2ZnzoNbsee8WT4uQveVMZGzJL_Y_WBFgSjyjD8","token_type":"bearer","expires_in":900,"user":{"id":"a9d65458-8e3e-4b5c-aae9-880ae3d721e7","email":"alice@acme.com","role":"EMPLOYEE","org_id":null,"device_trusted":false}}
+
+=== token_extracted ===
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhOWQ2NTQ1OC04ZTNlLTRiNWMtYWFlOS04ODBhZTNkNzIxZTciLCJlbWFpbCI6ImFsaWNlQGFjbWUuY29tIiwicm9sZSI6IkVNUExPWUVFIiwib3JnX2lkIjpudWxsLCJzZXNzaW9uX2lkIjoiNjBkOThhM2YtMTZlNy00ZjA1LTg2MjctMWNjYWE0ZTczNDU3IiwiZXhwIjoxNzc3NTkwMjE1fQ.2AZjfQiaoG3VLyUfNwExq3R9jLatJ2gA8JYzFw1WYI4
+
+=== me ===
+{"id":"a9d65458-8e3e-4b5c-aae9-880ae3d721e7","email":"alice@acme.com","role":"EMPLOYEE","org_id":null,"department_id":null,"employee_code":null,"clearance_level":1,"status":"ACTIVE"}
+
+=== upload ===
+{"detail":{"decision":"MFA_REQUIRED","reason":"HIGH_RISK"}}
+
+=== file_id_extracted ===
+MISSING
+
+=== file_after_scan ===
+Internal Server Error
+
+=== download ===
+{"detail":{"decision":"MFA_REQUIRED","reason":"HIGH_RISK"}}
+
+=== create_share ===
+Internal Server Error
+

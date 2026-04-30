@@ -37,5 +37,9 @@ class Settings:
     JWT_SECRET = required("JWT_SECRET")
     JWT_ALGORITHM = required("JWT_ALGORITHM")
 
+    # Upload constraints — read from env, with safe defaults
+    MAX_UPLOAD_MB = int(os.getenv("MAX_UPLOAD_MB", "100"))
+    ALLOWED_FILE_TYPES = os.getenv("ALLOWED_FILE_TYPES", "pdf,docx,xlsx,png,jpg").split(",")
+
 
 settings = Settings()

@@ -1,7 +1,11 @@
 from fastapi import FastAPI
 import uvicorn
 
+from app.api.risk_routes import router as risk_router
+
 app = FastAPI(title="risk-service")
+
+app.include_router(risk_router)
 
 
 @app.get("/")

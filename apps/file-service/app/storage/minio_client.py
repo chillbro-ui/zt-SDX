@@ -1,3 +1,5 @@
+from io import BytesIO
+
 from minio import Minio
 
 from app.core.config import settings
@@ -10,23 +12,17 @@ client = Minio(
     secure=False,
 )
 
-BUCKET = "files"
+# Use bucket name from config — not hardcoded
+BUCKET = settings.MINIO_BUCKET
 
 
 def ensure_bucket():
     if not client.bucket_exists(BUCKET):
         client.make_bucket(BUCKET)
-        
-from io import BytesIO
 
 
-def upload_file(
-    object_name: str,
-    content: bytes,
-    content_type: str,
-):
+def upload_file(object_name: str, content: bytes, content_type: str):
     data = BytesIO(content)
-
     client.put_object(
         bucket_name=BUCKET,
         object_name=object_name,
@@ -34,11 +30,7 @@ def upload_file(
         length=len(content),
         content_type=content_type,
     )
-    
-def get_download_url(
-    object_name: str,
-):
-    return client.presigned_get_object(
-        BUCKET,
-        object_name,
-    )
+
+
+def get_download_url(object_name: str) -> str:
+    return client.presigned_get_object(BUCKET, object_name)

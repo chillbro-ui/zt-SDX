@@ -9,6 +9,7 @@ async def evaluate(
     action: str,
     clearance_level: int = 1,
     risk_score: int = 0,
+    device_trusted: bool = False,
 ):
     async with httpx.AsyncClient() as client:
         response = await client.post(
@@ -19,7 +20,7 @@ async def evaluate(
                 "action": action,
                 "clearance_level": clearance_level,
                 "risk_score": risk_score,
+                "device_trusted": device_trusted,
             },
         )
-
     return response.json()

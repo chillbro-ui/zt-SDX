@@ -1,12 +1,6 @@
 fastapi
 uvicorn[standard]
-redis
-psycopg2-binary
-pydantic
 httpx
-boto3
-python-jose[cryptography]
-passlib[argon2]
-argon2-cffi
+pydantic[email]
 python-multipart
-sqlalchemy
+redis

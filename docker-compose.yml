@@ -84,6 +84,16 @@ services:
     depends_on:
       - postgres
 
+  alert-service:
+    build: ./apps/alert-service
+    container_name: zt-alert
+    env_file:
+      - .env
+    ports:
+      - "8006:8000"
+    depends_on:
+      - postgres
+
   risk-service:
     build: ./apps/risk-service
     container_name: zt-risk

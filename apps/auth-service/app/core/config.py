@@ -36,6 +36,12 @@ class Settings:
 
     JWT_SECRET = required("JWT_SECRET")
     JWT_ALGORITHM = required("JWT_ALGORITHM")
+    JWT_EXPIRE_MINUTES = os.getenv("JWT_EXPIRE_MINUTES", "15")
+
+    # Auth policy — read from env with safe defaults
+    MAX_LOGIN_ATTEMPTS = int(os.getenv("MAX_LOGIN_ATTEMPTS", "5"))
+    OTP_EXPIRY_SECONDS = int(os.getenv("OTP_EXPIRY_SECONDS", "300"))
+    TRUSTED_DEVICE_SCORE = int(os.getenv("TRUSTED_DEVICE_SCORE", "70"))
 
 
 settings = Settings()

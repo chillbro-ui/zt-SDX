@@ -3,10 +3,8 @@ uvicorn[standard]
 redis
 psycopg2-binary
 pydantic
-httpx
-boto3
+python-multipart
+sqlalchemy
 python-jose[cryptography]
 passlib[argon2]
 argon2-cffi
-python-multipart
-sqlalchemy
