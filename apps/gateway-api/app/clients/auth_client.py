@@ -75,9 +75,9 @@ async def me(token: str):
             headers={"Authorization": f"Bearer {token}"},
         )
     if response.status_code != 200:
-        raise httpx.HTTPStatusError(
-            f"Auth service returned {response.status_code}",
-            request=response.request,
-            response=response,
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=response.status_code,
+            detail=response.json().get("detail", "Authentication failed"),
         )
     return response.json()

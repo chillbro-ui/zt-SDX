@@ -157,6 +157,9 @@ async def upload(
         content_type=file.content_type or "application/octet-stream",
     )
 
+    if "id" not in uploaded:
+        raise HTTPException(status_code=400, detail=uploaded.get("detail", "File upload failed"))
+
     enqueue({
         "file_id": uploaded["id"],
         "owner_id": user["id"],
