@@ -1,6 +1,6 @@
 
 === test_email ===
-test_1777614426@acme.com
+test_1777616821@acme.com
 
 === health_gateway ===
 {"service":"gateway-api","status":"healthy","cors_origins":["http://localhost:5173"]}
@@ -12,7 +12,7 @@ test_1777614426@acme.com
 {"service":"policy-service","status":"healthy"}
 
 === health_file ===
-
+{"service":"file-service","status":"healthy"}
 
 === health_audit ===
 {"service":"audit-service","status":"healthy"}
@@ -27,15 +27,89 @@ test_1777614426@acme.com
 {"created":[],"skipped":["SUPER_ADMIN","SECURITY_ADMIN","DEPT_HEAD","MANAGER","EMPLOYEE","AUDITOR"]}
 
 === register_admin ===
-{"id":"3aa91564-f811-4e2a-8ce6-58cd58008304","email":"admin_1777614427@acme.com","role":"SUPER_ADMIN","department":"security","status":"ACTIVE"}
+{"id":"28527891-ba2e-4679-ac0a-9a8cb6241551","email":"admin_1777616821@acme.com","role":"SUPER_ADMIN","department":"security","status":"ACTIVE"}
 
 === register_employee ===
-{"id":"0820477f-b2cc-4b00-ae8a-f129ed776b66","email":"test_1777614426@acme.com","role":"EMPLOYEE","department":"Engineering","status":"ACTIVE"}
+{"id":"5daf732e-7550-48d4-84c4-e55046db8cac","email":"test_1777616821@acme.com","role":"EMPLOYEE","department":"Engineering","status":"ACTIVE"}
 
 === login_employee ===
-{"detail":"Rate limit exceeded. Max 10 requests per 60s. Try again later."}
+{"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZGFmNzMyZS03NTUwLTQ4ZDQtODRjNC1lNTUwNDZkYjhjYWMiLCJlbWFpbCI6InRlc3RfMTc3NzYxNjgyMUBhY21lLmNvbSIsInJvbGUiOiJFTVBMT1lFRSIsIm9yZ19pZCI6bnVsbCwic2Vzc2lvbl9pZCI6ImZlNzQwNWVmLWM2NDgtNDg0Yy05MDYzLTdhNzJiYjU3M2RhYSIsInJpc2tfc2NvcmUiOjEwLCJleHAiOjE3Nzc2MTc3MjF9.w94waa8l5CDdAICUzvb4mB0r0y_pTOZUnRpOEBRNJpo","refresh_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZGFmNzMyZS03NTUwLTQ4ZDQtODRjNC1lNTUwNDZkYjhjYWMiLCJzZXNzaW9uX2lkIjoiZmU3NDA1ZWYtYzY0OC00ODRjLTkwNjMtN2E3MmJiNTczZGFhIiwiZXhwIjoxNzc3NjQ1NjIxLCJ0eXBlIjoicmVmcmVzaCJ9.3_0TMadE4_z48VatJAfbGNdB13gW5Zf6kfwOQFUNbto","token_type":"bearer","expires_in":900,"otp_required":false,"risk_score":10,"user":{"id":"5daf732e-7550-48d4-84c4-e55046db8cac","email":"test_1777616821@acme.com","role":"EMPLOYEE","org_id":null,"device_trusted":false}}
 
-=== FAIL: login_failed ===
-{"detail":"Rate limit exceeded. Max 10 requests per 60s. Try again later."}
+=== login_admin ===
+{"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyODUyNzg5MS1iYTJlLTQ2NzktYWMwYS05YThjYjYyNDE1NTEiLCJlbWFpbCI6ImFkbWluXzE3Nzc2MTY4MjFAYWNtZS5jb20iLCJyb2xlIjoiU1VQRVJfQURNSU4iLCJvcmdfaWQiOm51bGwsInNlc3Npb25faWQiOiJmYzk1YTZhZS1lNDc5LTQzOWMtOWJmMi05MmE1MTZlZjk1M2UiLCJyaXNrX3Njb3JlIjoxMCwiZXhwIjoxNzc3NjE3NzIxfQ.KHfwnoS3Ic5CwDZFgVA1u749dDh0jWm52mDmhPcTbms","refresh_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyODUyNzg5MS1iYTJlLTQ2NzktYWMwYS05YThjYjYyNDE1NTEiLCJzZXNzaW9uX2lkIjoiZmM5NWE2YWUtZTQ3OS00MzljLTliZjItOTJhNTE2ZWY5NTNlIiwiZXhwIjoxNzc3NjQ1NjIxLCJ0eXBlIjoicmVmcmVzaCJ9.ZCP1xrszoWU6CByPaLdy8gz1DD1pm2XIFjyvxvIKlE8","token_type":"bearer","expires_in":900,"otp_required":false,"risk_score":10,"user":{"id":"28527891-ba2e-4679-ac0a-9a8cb6241551","email":"admin_1777616821@acme.com","role":"SUPER_ADMIN","org_id":null,"device_trusted":false}}
 
-ABORT: login failed
+=== me_employee ===
+{"id":"5daf732e-7550-48d4-84c4-e55046db8cac","email":"test_1777616821@acme.com","role":"EMPLOYEE","org_id":null,"department_id":null,"employee_code":null,"clearance_level":1,"status":"ACTIVE"}
+
+=== upload_internal_employee_ALLOW ===
+{"file":{"id":"d460a23e-3b78-4de0-96ce-e15a9c49364c","filename":"test.pdf","stored_name":"2f9df0c7-8017-4e18-907c-79f5ff4b74cc-test.pdf.enc","sha256":"ab982faa5057d1a2e5a80b69c06f09619c497f9f717a4644d7f8e22cac17bf8c","status":"QUARANTINED","encrypted":true},"message":"Upload successful. DLP scan queued."}
+
+=== upload_confidential_employee_DENY ===
+{"detail":{"decision":"DENY","reason":"RESOURCE_DENIED","message":"Your role 'EMPLOYEE' cannot upload CONFIDENTIAL files."}}
+
+=== upload_secret_employee_DENY ===
+{"detail":{"decision":"DENY","reason":"RESOURCE_DENIED","message":"Your role 'EMPLOYEE' cannot upload SECRET files."}}
+
+=== upload_secret_admin_ALLOW ===
+{"file":{"id":"5666f19b-d5bf-4c3b-ad2e-60f0ea5b7662","filename":"test.pdf","stored_name":"5152e8bb-a181-484b-8df4-b25810045365-test.pdf.enc","sha256":"ab982faa5057d1a2e5a80b69c06f09619c497f9f717a4644d7f8e22cac17bf8c","status":"QUARANTINED","encrypted":true},"message":"Upload successful. DLP scan queued."}
+
+=== file_id ===
+b55f132f-fbd1-4eef-be39-a688d810de4a
+
+Waiting 6s for DLP scan...
+=== file_after_scan ===
+{"id":"b55f132f-fbd1-4eef-be39-a688d810de4a","filename":"test.pdf","stored_name":"e76420f6-6385-4b42-a85c-8901aa6eca1e-test.pdf.enc","size":25,"mime_type":"application/pdf","sha256":"ab982faa5057d1a2e5a80b69c06f09619c497f9f717a4644d7f8e22cac17bf8c","sensitivity":"INTERNAL","status":"QUARANTINED","risk_score":95,"encrypted":true,"created_at":"2026-05-01T06:27:01.768800"}
+
+=== list_files ===
+{"files":[{"id":"b55f132f-fbd1-4eef-be39-a688d810de4a","filename":"test.pdf","size":25,"mime_type":"application/pdf","sensitivity":"INTERNAL","status":"QUARANTINED","risk_score":95,"sha256":"ab982faa5057d1a2e5a80b69c06f09619c497f9f717a4644d7f8e22cac17bf8c","encrypted":true,"created_at":"2026-05-01T06:27:01.768800"},{"id":"d460a23e-3b78-4de0-96ce-e15a9c49364c","filename":"test.pdf","size":25,"mime_type":"application/pdf","sensitivity":"INTERNAL","status":"ACTIVE","risk_score":75,"sha256":"ab982faa5057d1a2e5a80b69c06f09619c497f9f717a4644d7f8e22cac17bf8c","encrypted":true,"created_at":"2026-05-01T06:27:01.563594"}]}
+
+=== download_file ===
+{"detail":{"decision":"MFA_REQUIRED","reason":"HIGH_RISK"}}
+HTTP:403
+
+=== create_share ===
+{"detail":"Cannot share a quarantined file. Wait for DLP scan to complete."}
+
+=== delete_file ===
+{"id":"b55f132f-fbd1-4eef-be39-a688d810de4a","message":"File deleted"}
+
+=== audit_events_employee_DENY ===
+{"detail":"Access denied. Required: SUPER_ADMIN, SECURITY_ADMIN, AUDITOR. Your role: EMPLOYEE"}
+
+=== audit_events_admin_ALLOW ===
+[{"id":"52dcc118-b9c0-494b-a1be-668c39b7478d","actor":"5daf732e-7550-48d4-84c4-e55046db8cac","action":"FILE_DELETE","resource":"b55f132f-fbd1-4eef-be39-a688d810de4a","ip":"gateway","result":"SUCCESS","hash":"9b3ab945bcb37901eeafa53019497d2800bd3c771729a7205d92abb5f55f99a5","prev_hash":"b61738fc212e1e7b2fa2dd05051e6e9f3389bc0040ded20d350232ca2f507ffa","created_at":"2026-05-01T06:27:08.042070"},{"id":"61f48a48-d11e-4843-a8de-8f6c5a52456f","actor":"5daf732e-7550-48d4-84c4-e55046db8cac","action":"SHARE_CREATED","resource":"b55f132f-fbd1-4eef-be39-a688d810de4a","ip":"gateway","result":"SUCCESS","hash":"b61738fc212e1e7b2fa2dd05051e6e9f3389bc0040ded20d350232ca2f507ffa","prev_hash":"4f045d620a22203966fc245b6e21dbb6c126665c292ff34d9d80127d37c41b84","created_at":"2026-05-01T06:27:07.955536"},{"id":"13a09871-ceb7-4266-89da-d7835b181119","actor":"5daf732e-7550-48d4-84c4-e55046db8cac","action":"SCAN_COMPLETE","resource":"b55f132f-fbd1-4eef-be39-a688d810de4a","ip":"worker","result":"QUARANTINED","hash":"4f045d620a22203966fc245b6e21dbb6c126665c292ff34d9d80127d37c41b84","prev_hash":"1c88c3dc116981e321e9e868bdb1c80189ef97313a4e1989f48890e4d0eff324","created_at":"2026-05-01T06:27:06.130842"},{"id":"25b85f41-cecd-4905-b82f-a8dd03a006d5","actor":"28527891-ba2e-4679-ac0a-9a8cb6241551","action":"SCAN_COMPLETE","resource":"5666f19b-d5bf-4c3b-ad2e-60f0ea5b7662","ip":"worker","result":"ACTIVE","hash":"1c88c3dc116981e321e9e868bdb1c80189ef97313a4e1989f48890e4d0eff324","prev_hash":"44c40990f4802abce33c5125189c2b8331375ba054ecb9b7c98f43ca4f037bc5","created_at":"2026-05-01T06:27:04.102560"},{"id":"4ad426e1-b6dd-4cb3-8b6a-b5109ee02af6","actor":"5daf732e-7550-48d4-84c4-e55046db8cac","action":"SCAN_COMPLETE","resource":"d460a23e-3b78-4de0-96ce-e15a9c49364c","ip":"worker","result":"ACTIVE","hash":"44c40990f4802abce33c5125189c2b8331375ba054ecb9b7c98f43ca4f037bc5","prev_hash":"14d6747b9c64e6cb97d15f274e83149bf78de76439baab9c03d70f95dc8cdbc1","created_at":"2026-05-01T06:27:02.074935"},{"id":"e3465b44-6fbf-4b86-85a3-e7aa28e0556d","actor":"5daf732e-7550-48d4-84c4-e55046db8cac","action":"FILE_UPLOAD","resource":"b55f132f-fbd1-4eef-be39-a688d810de4a","ip":"gateway","result":"SUCCESS","hash":"14d6747b9c64e6cb97d15f274e83149bf78de76439baab9c03d70f95dc8cdbc1","prev_hash":"e9e438e3668f0f15b597bba58b77792fdc5668b19e5ce16cf87408fe9f2cf726","created_at":"2026-05-01T06:27:01.783603"},{"id":"af5019db-c489-4e01-b5ca-4170f7be7834","actor":"28527891-ba2e-4679-ac0a-9a8cb6241551","action":"FILE_UPLOAD","resource":"5666f19b-d5bf-4c3b-ad2e-60f0ea5b7662","ip":"gateway","result":"SUCCESS","hash":"e9e438e3668f0f15b597bba58b77792fdc5668b19e5ce16cf87408fe9f2cf726","prev_hash":"49bfcb60b3f4d968d3a8b222750eed0928a7a8c640207fa6e297b2cc230f2791","created_at":"2026-05-01T06:27:01.715850"},{"id":"8f1a6aa0-4131-45c1-a3f1-3acc679938be","actor":"5daf732e-7550-48d4-84c4-e55046db8cac","action":"FILE_UPLOAD","resource":"d460a23e-3b78-4de0-96ce-e15a9c49364c","ip":"gateway","result":"SUCCESS","hash":"49bfcb60b3f4d968d3a8b222750eed0928a7a8c640207fa6e297b2cc230f2791","prev_hash":"d67aecd4c3e1b0676270abc3ce5d41b564aba75dd5c4b4f517349940c6d1c56c","created_at":"2026-05-01T06:27:01.578774"},{"id":"80a37874-b1b0-4cb3-9a55-2ca738730080","actor":"37e72873-484b-4b02-815a-ebf8ddaca9f8","action":"FILE_DELETE","resource":"947e85f1-41d3-40c5-8191-354f62ceb4cc","ip":"gateway","result":"SUCCESS","hash":"d67aecd4c3e1b0676270abc3ce5d41b564aba75dd5c4b4f517349940c6d1c56c","prev_hash":"3e8635663ed38192c31dd829cc415347263249ed9b23e97ffa86996ce0a4e33e","created_at":"2026-05-01T06:23:30.590398"},{"id":"3aee176d-cee2-425e-a606-895401f4fd29","actor":"anonymous","action":"SHARE_DOWNLOAD","resource":"lu0YZEppKtDOBzUwGHjQCUY_uDyIxl9cAVVxec5OvXk","ip":"gateway","result":"SUCCESS","hash":"3e8635663ed38192c31dd829cc415347263249ed9b23e97ffa86996ce0a4e33e","prev_hash":"0a4814f9d5e8ec5cc553cf0135ae550568fa02558b4262811f98f83b8b9e3beb","created_at":"2026-05-01T06:23:30.544281"},{"id":"2d3d533c-edae-4a91-8d6d-a065eb8b9f30","actor":"anonymous","action":"SHARE_DOWNLOAD","resource":"lu0YZEppKtDOBzUwGHjQCUY_uDyIxl9cAVVxec5OvXk","ip":"gateway","result":"SUCCESS","hash":"0a4814f9d5e8ec5cc553cf0135ae550568fa02558b4262811f98f83b8b9e3beb","prev_hash":"0fb940f4513f65395b18c6e87739d89ab64f128862896824e48f14d0122f4e3d","created_at":"2026-05-01T06:23:30.513220"},{"id":"8444c19e-9650-4aaa-bfc3-60ef7551df8c","actor":"anonymous","action":"SHARE_DOWNLOAD","resource":"lu0YZEppKtDOBzUwGHjQCUY_uDyIxl9cAVVxec5OvXk","ip":"gateway","result":"SUCCESS","hash":"0fb940f4513f65395b18c6e87739d89ab64f128862896824e48f14d0122f4e3d","prev_hash":"19bbbdfd08bcc2ad34e3c447646872c239c64bc251c5a7f5fef79b1786e6d91e","created_at":"2026-05-01T06:23:30.464958"},{"id":"6e5cb7b8-ec3a-4daa-abb5-ad5306e785d6","actor":"37e72873-484b-4b02-815a-ebf8ddaca9f8","action":"SHARE_CREATED","resource":"947e85f1-41d3-40c5-8191-354f62ceb4cc","ip":"gateway","result":"SUCCESS","hash":"19bbbdfd08bcc2ad34e3c447646872c239c64bc251c5a7f5fef79b1786e6d91e","prev_hash":"87f077874ea47ad12352b64246b5ca1b567fa74bd2b6fe055639b859861c6f01","created_at":"2026-05-01T06:23:30.394452"},{"id":"df870f0f-b3f4-4ee3-83a2-38415e6fab15","actor":"37e72873-484b-4b02-815a-ebf8ddaca9f8","action":"SCAN_COMPLETE","resource":"947e85f1-41d3-40c5-8191-354f62ceb4cc","ip":"worker","result":"ACTIVE","hash":"87f077874ea47ad12352b64246b5ca1b567fa74bd2b6fe055639b859861c6f01","prev_hash":"61eaa8ff0da31255d1e5a1329f46f5d89faf2caaa2f74f7caab9e06951bca691","created_at":"2026-05-01T06:23:25.983294"},{"id":"d3c47ad7-949f-475f-8f59-92e459d3267c","actor":"37e72873-484b-4b02-815a-ebf8ddaca9f8","action":"FILE_UPLOAD","resource":"947e85f1-41d3-40c5-8191-354f62ceb4cc","ip":"gateway","result":"SUCCESS","hash":"61eaa8ff0da31255d1e5a1329f46f5d89faf2caaa2f74f7caab9e06951bca691","prev_hash":"c5c754319ae09096848f15bf9637a921b481329731f326b102a64e71b4ac03df","created_at":"2026-05-01T06:23:24.122126"},{"id":"1a07c672-0c4f-49fa-a5c8-06121ade3413","actor":"250f346a-6b1a-431d-bb7c-3f3fa805377c","action":"FILE_DELETE","resource":"0c79bdcb-b302-4d7e-a324-1e6296081219","ip":"gateway","result":"SUCCESS","hash":"c5c754319ae09096848f15bf9637a921b481329731f326b102a64e71b4ac03df","prev_hash":"6d56531e3b56c75c54b2b774dd343d3df343df81e491b46ae9a1a485562c61e6","created_at":"2026-05-01T03:35:41.351709"},{"id":"4ced93b6-3c09-47b3-a902-7577421dfdab","actor":"anonymous","action":"SHARE_DOWNLOAD","resource":"o-PAbO-Gr1qL3IeKN2Xw00EY2VVQgIHmVpsAP-vqk8o","ip":"gateway","result":"SUCCESS","hash":"6d56531e3b56c75c54b2b774dd343d3df343df81e491b46ae9a1a485562c61e6","prev_hash":"9cfa61ff9253c8c42cde3387616ac3d3bc3c0da2ed5866232d7df28c973a26b2","created_at":"2026-05-01T03:35:41.292221"},{"id":"33adb8e7-3371-45f1-a043-3493ca3313ad","actor":"anonymous","action":"SHARE_DOWNLOAD","resource":"o-PAbO-Gr1qL3IeKN2Xw00EY2VVQgIHmVpsAP-vqk8o","ip":"gateway","result":"SUCCESS","hash":"9cfa61ff9253c8c42cde3387616ac3d3bc3c0da2ed5866232d7df28c973a26b2","prev_hash":"b840aefef64f171de747b5498e3f8a09463df6609c7990e0a7560a7db56c3a70","created_at":"2026-05-01T03:35:41.257522"},{"id":"5c4d8cca-53f6-4a39-9449-d2ac94bf89c3","actor":"anonymous","action":"SHARE_DOWNLOAD","resource":"o-PAbO-Gr1qL3IeKN2Xw00EY2VVQgIHmVpsAP-vqk8o","ip":"gateway","result":"SUCCESS","hash":"b840aefef64f171de747b5498e3f8a09463df6609c7990e0a7560a7db56c3a70","prev_hash":"0f8d8736d1f7c5d93cea2d73156f58a7de615805f03601bb996feb63de262c43","created_at":"2026-05-01T03:35:41.216546"},{"id":"4fc0681d-92f8-4573-87d3-aa84fbf8b137","actor":"250f346a-6b1a-431d-bb7c-3f3fa805377c","action":"SHARE_CREATED","resource":"0c79bdcb-b302-4d7e-a324-1e6296081219","ip":"gateway","result":"SUCCESS","hash":"0f8d8736d1f7c5d93cea2d73156f58a7de615805f03601bb996feb63de262c43","prev_hash":"b05cc1fc0cbe6cf994e045293454b893bb741546be21b9554cf99a58effd6689","created_at":"2026-05-01T03:35:41.149588"},{"id":"f5e27844-b0c9-4dec-a6f5-55ef20a118ac","actor":"250f346a-6b1a-431d-bb7c-3f3fa805377c","action":"SCAN_COMPLETE","resource":"0c79bdcb-b302-4d7e-a324-1e6296081219","ip":"worker","result":"ACTIVE","hash":"b05cc1fc0cbe6cf994e045293454b893bb741546be21b9554cf99a58effd6689","prev_hash":"0bd9941429e69ac2ac2b8255454c729eae48cde37f5bd213826acea8daa07ee5","created_at":"2026-05-01T03:35:36.138131"},{"id":"580c148d-3b52-449b-8d00-c856fd47c1aa","actor":"250f346a-6b1a-431d-bb7c-3f3fa805377c","action":"FILE_UPLOAD","resource":"0c79bdcb-b302-4d7e-a324-1e6296081219","ip":"gateway","result":"SUCCESS","hash":"0bd9941429e69ac2ac2b8255454c729eae48cde37f5bd213826acea8daa07ee5","prev_hash":"GENESIS","created_at":"2026-05-01T03:35:34.956977"}]
+
+=== audit_verify_admin_ALLOW ===
+{"valid":true,"total_logs":22,"first_hash":"0bd9941429e69ac2ac2b8255454c729eae48cde37f5bd213826acea8daa07ee5","last_hash":"9b3ab945bcb37901eeafa53019497d2800bd3c771729a7205d92abb5f55f99a5","error":null}
+
+=== alerts_employee_DENY ===
+{"detail":"Access denied. Required: SUPER_ADMIN, SECURITY_ADMIN. Your role: EMPLOYEE"}
+
+=== alerts_admin_ALLOW ===
+[{"id":"625af11b-3c85-4b86-a68d-f2230e0c7cef","type":"HIGH_RISK_FILE","severity":"HIGH","score_delta":95,"details":"file_id=b55f132f-fbd1-4eef-be39-a688d810de4a reason=HIGH_RISK_SCORE risk_score=95","created_at":"2026-05-01T06:27:06.165122"}]
+
+=== org_create_employee_DENY ===
+{"detail":"Access denied. Required: SUPER_ADMIN. Your role: EMPLOYEE"}
+
+=== org_create_admin_ALLOW ===
+{"id":"2390825d-834b-46e3-b4a1-07432f7ec010","name":"Acme Corp","domain":"acme-test2.com","country":"IN","created_at":"2026-05-01T06:27:08.252003","message":"Organization created with default departments."}
+
+=== list_departments ===
+[{"id":"f8d03f81-7ba9-4663-9b40-abd8b208190f","name":"Engineering","org_id":"2390825d-834b-46e3-b4a1-07432f7ec010","created_at":"2026-05-01T06:27:08.259039"},{"id":"e409454d-a71f-4445-a9f3-ac2eff8a575a","name":"Finance","org_id":"2390825d-834b-46e3-b4a1-07432f7ec010","created_at":"2026-05-01T06:27:08.259039"},{"id":"5323b46d-faf4-4557-a73e-36ea927ee7eb","name":"HR","org_id":"2390825d-834b-46e3-b4a1-07432f7ec010","created_at":"2026-05-01T06:27:08.259039"},{"id":"73b4a75d-0c8c-4d3f-8e3b-7ac975807c3a","name":"Security","org_id":"2390825d-834b-46e3-b4a1-07432f7ec010","created_at":"2026-05-01T06:27:08.259039"},{"id":"ef37fdca-3dc3-4863-b91b-de043fb69eef","name":"Legal","org_id":"2390825d-834b-46e3-b4a1-07432f7ec010","created_at":"2026-05-01T06:27:08.259039"},{"id":"83ef17de-bcee-4550-801a-284ab402b240","name":"Operations","org_id":"2390825d-834b-46e3-b4a1-07432f7ec010","created_at":"2026-05-01T06:27:08.259039"}]
+
+=== token_refresh ===
+{"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZGFmNzMyZS03NTUwLTQ4ZDQtODRjNC1lNTUwNDZkYjhjYWMiLCJlbWFpbCI6InRlc3RfMTc3NzYxNjgyMUBhY21lLmNvbSIsInJvbGUiOiJFTVBMT1lFRSIsIm9yZ19pZCI6bnVsbCwiZXhwIjoxNzc3NjE3NzI4fQ.2kPgVIneh3SU6Zyx2qD6v5f0AJz9nENRzW4d8vBs7OM","refresh_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1ZGFmNzMyZS03NTUwLTQ4ZDQtODRjNC1lNTUwNDZkYjhjYWMiLCJleHAiOjE3Nzc2NDU2MjgsInR5cGUiOiJyZWZyZXNoIn0.FOoqFP1ZLqjdhq9mM_Ya6ZBlpvjnRPStaeEFlqN3Q0A","token_type":"bearer","expires_in":900}
+
+=== lockout_correct_pass_blocked ===
+{"detail":"Account suspended."}
+
+=== rate_limit_fires_at_11 ===
+429_FOUND
+
+=== logout ===
+{"message":"Logged out successfully"}
+
+=== token_revoked ===
+{"detail":"Token has been revoked. Please log in again."}
+
+=== ALL TESTS COMPLETE ===
