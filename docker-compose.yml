@@ -104,6 +104,9 @@ services:
     depends_on:
       - postgres
       - redis
+      - minio
+      - audit-service
+      - alert-service
 
   worker-service:
     build: ./apps/worker-service

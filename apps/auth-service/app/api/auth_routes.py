@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import os
 import random
 import secrets
@@ -8,6 +9,7 @@ from typing import Optional, cast
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
+from app.clients.risk_client import score_login_event
 from app.core.cache import rdb
 from app.core.config import settings
 from app.core.db import get_db
@@ -20,6 +22,8 @@ from app.security.deps import get_current_user
 from app.security.password import hash_password, verify_password
 from app.security.token import create_access_token, create_refresh_token, verify_access_token
 from app.services.user_service import create_user, get_user_by_email, get_user_by_id
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -54,7 +58,7 @@ def register(
 
 
 @router.post("/login")
-def login(
+async def login(
     request: Request,
     email: str,
     password: str,
@@ -90,13 +94,24 @@ def login(
         rdb.setex(attempt_key, 900, str(new_count))  # 15 min window
 
         if new_count >= settings.MAX_LOGIN_ATTEMPTS:
-            # Lock the account
             user.status = "SUSPENDED"
             db.commit()
             raise HTTPException(
                 status_code=403,
                 detail=f"Account locked after {settings.MAX_LOGIN_ATTEMPTS} failed attempts. Contact your administrator.",
             )
+
+        # ── Report LOGIN_FAILED to risk-service (fire-and-forget) ──────────
+        try:
+            await score_login_event(
+                user_id=str(user.id),
+                event="LOGIN_FAILED",
+                ip=request.client.host if request.client else None,
+                is_new_fingerprint=not bool(device_fingerprint),
+            )
+        except Exception as exc:
+            logger.warning(f"Risk scoring LOGIN_FAILED failed (non-fatal): {exc}")
+        # ─────────────────────────────────────────────────────────────────────
 
         remaining = settings.MAX_LOGIN_ATTEMPTS - new_count
         raise HTTPException(
@@ -106,7 +121,6 @@ def login(
 
     # Successful login — clear failed attempts
     rdb.delete(attempt_key)
-    # ─────────────────────────────────────────────────────────────────────────
 
     # Resolve client IP
     client_ip = request.client.host if request.client else "unknown"
@@ -114,6 +128,7 @@ def login(
     # Register or update device
     device_id = None
     device_trusted = False
+    is_new_device = False
     if device_fingerprint:
         device = db.query(Device).filter(
             Device.user_id == user.id,
@@ -121,6 +136,7 @@ def login(
         ).first()
 
         if not device:
+            is_new_device = True
             device = Device(
                 user_id=user.id,
                 fingerprint=device_fingerprint,
@@ -136,27 +152,34 @@ def login(
         device_id = str(device.id)
         device_trusted = bool(device.trusted)
 
-    # ── Login Risk Score (computed from available signals) ───────────────────
-    # This is the session-level risk score, separate from file-level risk.
-    # ML team will extend this with geo, time, and behavioral signals.
-    login_risk = 0
+    # ── Score this login event via risk-service ───────────────────────────────
+    # Determine which event type to send based on device state
+    risk_event_type = "NEW_DEVICE_LOGIN" if is_new_device else "LOGIN_SUCCESS"
 
-    # Signal: failed login attempts in this window
-    # Each previous failed attempt adds 15 points
-    login_risk += min(attempts * 15, 45)  # cap at 45 for attempts signal
+    # Device trust: trusted=100, untrusted=50, unknown=40
+    device_trust_score: float | None = None
+    if device_fingerprint:
+        device_trust_score = float(settings.TRUSTED_DEVICE_SCORE) if device_trusted else 50.0
+    else:
+        device_trust_score = 40.0  # no fingerprint = unknown device
 
-    # Signal: new / untrusted device
-    if device_fingerprint and not device_trusted:
-        login_risk += 25  # new or known-untrusted device
+    try:
+        risk_result = await score_login_event(
+            user_id=str(user.id),
+            event=risk_event_type,
+            ip=client_ip,
+            device_id=device_id,
+            device_trust=device_trust_score,
+            is_new_fingerprint=is_new_device,
+        )
+    except Exception as exc:
+        logger.warning(f"Risk scoring failed during login (fail-open): {exc}")
+        risk_result = {"risk_score": 0, "recommended_action": "ALLOW", "level": "LOW"}
 
-    # Signal: no device fingerprint sent at all
-    if not device_fingerprint:
-        login_risk += 10  # unknown device context
+    login_risk = int(risk_result.get("risk_score", 0))
+    # ─────────────────────────────────────────────────────────────────────────
 
-    # Clamp to 0-100
-    login_risk = min(login_risk, 100)
-
-    # Create session with computed risk score
+    # Create session with risk score from risk-service
     session = SessionModel(
         user_id=user.id,
         ip=client_ip,
@@ -168,7 +191,7 @@ def login(
     db.commit()
     db.refresh(session)
 
-    # Issue JWT
+    # Issue JWT — embed risk_score so downstream services can use it
     token_data = {
         "sub": str(user.id),
         "email": user.email,
@@ -184,11 +207,7 @@ def login(
     refresh_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
     rdb.setex(f"refresh:{refresh_hash}", 28800, str(user.id))
 
-    # ── MFA Decision ──────────────────────────────────────────────────────────
-    # Trigger MFA if:
-    #   - mfa_enabled is manually set on the user, OR
-    #   - login risk score is in the MFA threshold range (30-59)
-    #   - risk >= 60 → DENY entirely
+    # ── MFA / Deny decision driven by risk-service score ─────────────────────
     mfa_threshold = int(os.getenv("RISK_MFA_THRESHOLD", "30"))
     deny_threshold = int(os.getenv("RISK_DENY_THRESHOLD", "60"))
 
@@ -216,6 +235,7 @@ def login(
             "otp": otp,  # Demo only — production sends via email/SMS
             "expires_in_seconds": otp_ttl,
             "risk_score": login_risk,
+            "risk_level": risk_result.get("level", "LOW"),
             "user": {
                 "id": str(user.id),
                 "email": user.email,
@@ -230,6 +250,7 @@ def login(
         "expires_in": 900,
         "otp_required": False,
         "risk_score": login_risk,
+        "risk_level": risk_result.get("level", "LOW"),
         "user": {
             "id": str(user.id),
             "email": user.email,

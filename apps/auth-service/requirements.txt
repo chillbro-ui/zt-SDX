@@ -3,6 +3,7 @@ uvicorn[standard]
 redis
 psycopg2-binary
 pydantic
+httpx
 python-multipart
 sqlalchemy
 python-jose[cryptography]

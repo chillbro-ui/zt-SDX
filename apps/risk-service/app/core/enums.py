@@ -1,0 +1,48 @@
+from enum import Enum
+
+
+class RiskLevel(str, Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    CRITICAL = "CRITICAL"
+
+
+class RecommendedAction(str, Enum):
+    ALLOW = "ALLOW"
+    LOG = "LOG"
+    MFA_REQUIRED = "MFA_REQUIRED"
+    DENY = "DENY"
+
+
+class AlertType(str, Enum):
+    RAPID_DOWNLOAD = "RAPID_DOWNLOAD"
+    IMPOSSIBLE_TRAVEL = "IMPOSSIBLE_TRAVEL"
+    BRUTE_FORCE_LOGIN = "BRUTE_FORCE_LOGIN"
+    SUSPICIOUS_SHARING = "SUSPICIOUS_SHARING"
+    HIGH_SENSITIVITY_EXFILTRATION = "HIGH_SENSITIVITY_EXFILTRATION"
+    PRIVILEGE_ESCALATION = "PRIVILEGE_ESCALATION"
+
+
+class AlertSeverity(str, Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    CRITICAL = "CRITICAL"
+
+
+class EventType(str, Enum):
+    # Auth events
+    LOGIN_SUCCESS = "LOGIN_SUCCESS"
+    LOGIN_FAILED = "LOGIN_FAILED"
+    OTP_FAILED = "OTP_FAILED"
+    NEW_DEVICE_LOGIN = "NEW_DEVICE_LOGIN"
+
+    # File events
+    FILE_UPLOAD = "FILE_UPLOAD"
+    FILE_DOWNLOAD = "FILE_DOWNLOAD"
+    SHARE_CREATED = "SHARE_CREATED"
+
+    # Policy events
+    POLICY_DENY = "POLICY_DENY"
+    MFA_ESCALATED = "MFA_ESCALATED"

@@ -6,7 +6,9 @@ pydantic
 httpx
 boto3
 python-jose[cryptography]
-passlib[argon2]
-argon2-cffi
 python-multipart
 sqlalchemy
+numpy
+scikit-learn
+pandas
+python-dotenv

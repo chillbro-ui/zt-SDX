@@ -97,22 +97,13 @@ async def upload(
 ):
     """
     sensitivity: PUBLIC | INTERNAL | CONFIDENTIAL | SECRET (default: INTERNAL)
-
-    Who can upload what:
-      EMPLOYEE / MANAGER  → PUBLIC, INTERNAL
-      DEPT_HEAD           → PUBLIC, INTERNAL, CONFIDENTIAL
-      SECURITY_ADMIN / SUPER_ADMIN → all including SECRET
-      AUDITOR             → PUBLIC, INTERNAL (read-focused role)
     """
-    # Rate limit: 30 uploads per minute per IP
     check_rate_limit(request, key_prefix="upload", limit=30, window=60)
 
     user = await auth_client.me(token)
-
     if "id" not in user:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-    # Validate sensitivity
     valid_sensitivities = ["PUBLIC", "INTERNAL", "CONFIDENTIAL", "SECRET"]
     sensitivity = sensitivity.upper()
     if sensitivity not in valid_sensitivities:
@@ -121,13 +112,25 @@ async def upload(
             detail=f"Invalid sensitivity '{sensitivity}'. Must be one of: {', '.join(valid_sensitivities)}",
         )
 
-    # Policy check — sensitivity is the resource so RBAC enforces who can upload what
+    # ── Score FILE_UPLOAD event via risk-service ──────────────────────────────
+    # Use the live user risk score for the policy check, not a hardcoded 0.
+    risk_result = await risk_client.score_event(
+        user_id=user["id"],
+        event="FILE_UPLOAD",
+        ip=request.client.host if request.client else None,
+        sensitivity=sensitivity,
+        token=token,
+    )
+    user_risk_score = int(risk_result.get("risk_score", 0))
+    # ─────────────────────────────────────────────────────────────────────────
+
+    # Policy check — uses live risk score from risk-service
     decision = await policy_client.evaluate(
         role=user["role"],
         resource=sensitivity,
         action="UPLOAD",
-        clearance_level=1,
-        risk_score=0,
+        clearance_level=user.get("clearance_level", 1),
+        risk_score=user_risk_score,
     )
 
     if decision["decision"] != "ALLOW":
@@ -135,7 +138,8 @@ async def upload(
             status_code=403,
             detail={
                 **decision,
-                "message": f"Your role '{user['role']}' cannot upload {sensitivity} files.",
+                "risk_score": user_risk_score,
+                "message": f"Your role '{user['role']}' cannot upload {sensitivity} files (risk score: {user_risk_score}).",
             },
         )
 
@@ -156,6 +160,7 @@ async def upload(
         "file_id": uploaded["id"],
         "owner_id": user["id"],
         "stored_name": uploaded["stored_name"],
+        "sensitivity": sensitivity,
         "action": "SCAN",
     })
 
@@ -163,11 +168,15 @@ async def upload(
         actor=user["id"],
         action="FILE_UPLOAD",
         resource=uploaded["id"],
-        ip="gateway",
+        ip=request.client.host if request.client else "gateway",
         result="SUCCESS",
     )
 
-    return {"file": uploaded, "message": "Upload successful. DLP scan queued."}
+    return {
+        "file": uploaded,
+        "risk_score": user_risk_score,
+        "message": "Upload successful. DLP scan queued.",
+    }
 
 
 @router.get("/files", summary="List files for current user")
@@ -183,32 +192,49 @@ async def get_file(file_id: str, token: str = Depends(get_token)):
 
 
 @router.get("/files/{file_id}/download", summary="Download a file (decrypted, streamed)")
-async def download_file(file_id: str, token: str = Depends(get_token)):
+async def download_file(request: Request, file_id: str, token: str = Depends(get_token)):
     user = await auth_client.me(token)
 
     file_meta = await file_client.get_file(file_id=file_id)
-    stored_risk = file_meta.get("risk_score", 0) if isinstance(file_meta, dict) else 0
     file_sensitivity = file_meta.get("sensitivity", "INTERNAL") if isinstance(file_meta, dict) else "INTERNAL"
+
+    # ── Score FILE_DOWNLOAD event via risk-service ────────────────────────────
+    # This updates the user's running risk profile AND gives us the live score
+    # to pass to the policy engine — replacing the stale file-level risk_score.
+    risk_result = await risk_client.score_event(
+        user_id=user["id"],
+        event="FILE_DOWNLOAD",
+        ip=request.client.host if request.client else None,
+        sensitivity=file_sensitivity,
+        token=token,
+    )
+    user_risk_score = int(risk_result.get("risk_score", 0))
+    # ─────────────────────────────────────────────────────────────────────────
 
     decision = await policy_client.evaluate(
         role=user["role"],
         resource=file_sensitivity,
         action="DOWNLOAD",
-        clearance_level=1,
-        risk_score=stored_risk,
+        clearance_level=user.get("clearance_level", 1),
+        risk_score=user_risk_score,
     )
 
     if decision["decision"] != "ALLOW":
-        raise HTTPException(status_code=403, detail=decision)
+        raise HTTPException(
+            status_code=403,
+            detail={
+                **decision,
+                "risk_score": user_risk_score,
+            },
+        )
 
-    # Returns a streaming Response with decrypted file bytes
     result = await file_client.download_file(file_id=file_id, user_id=user["id"])
 
     await audit_client.log(
         actor=user["id"],
         action="FILE_DOWNLOAD",
         resource=file_id,
-        ip="gateway",
+        ip=request.client.host if request.client else "gateway",
         result="SUCCESS",
     )
 
@@ -218,8 +244,25 @@ async def download_file(file_id: str, token: str = Depends(get_token)):
 # ─── Shares ───────────────────────────────────────────────────────────────────
 
 @router.post("/shares", summary="Create a share link for a file")
-async def create_share(body: CreateShareRequest, token: str = Depends(get_token)):
+async def create_share(request: Request, body: CreateShareRequest, token: str = Depends(get_token)):
     user = await auth_client.me(token)
+
+    # ── Score SHARE_CREATED event via risk-service ────────────────────────────
+    risk_result = await risk_client.score_event(
+        user_id=user["id"],
+        event="SHARE_CREATED",
+        ip=request.client.host if request.client else None,
+        token=token,
+    )
+    user_risk_score = int(risk_result.get("risk_score", 0))
+
+    # Block share creation if user risk is CRITICAL
+    if risk_result.get("recommended_action") == "DENY":
+        raise HTTPException(
+            status_code=403,
+            detail=f"Share creation blocked. User risk score {user_risk_score} is too high.",
+        )
+    # ─────────────────────────────────────────────────────────────────────────
 
     result = await file_client.create_share(
         file_id=body.file_id,
@@ -234,7 +277,7 @@ async def create_share(body: CreateShareRequest, token: str = Depends(get_token)
         actor=user["id"],
         action="SHARE_CREATED",
         resource=body.file_id,
-        ip="gateway",
+        ip=request.client.host if request.client else "gateway",
         result="SUCCESS",
     )
 
@@ -254,6 +297,43 @@ async def download_via_share(share_token: str):
     )
 
     return result
+
+
+# ─── Risk — SECURITY_ADMIN / SUPER_ADMIN only ────────────────────────────────
+
+@router.get("/risk/user/{user_id}", summary="Get risk profile for a user")
+async def get_user_risk_profile(
+    user_id: str,
+    token: str = Depends(get_token),
+    user: dict = Depends(require_roles(["SUPER_ADMIN", "SECURITY_ADMIN"])),
+):
+    """
+    Returns the current risk profile for any user.
+    Proxies to risk-service GET /risk/user/{user_id}/profile.
+    """
+    return await risk_client.get_user_risk(user_id=user_id, token=token)
+
+
+@router.get("/risk/alerts", summary="Get risk alerts (all users)")
+async def get_risk_alerts(
+    token: str = Depends(get_token),
+    user: dict = Depends(require_roles(["SUPER_ADMIN", "SECURITY_ADMIN"])),
+):
+    """
+    Returns recent risk alerts from risk-service.
+    """
+    from app.clients.config import RISK_URL
+    import httpx
+    try:
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            resp = await client.get(
+                f"{RISK_URL}/risk/alerts",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            resp.raise_for_status()
+            return resp.json()
+    except Exception:
+        return []
 
 
 # ─── Audit — SECURITY_ADMIN / AUDITOR / SUPER_ADMIN only ─────────────────────
@@ -337,7 +417,7 @@ async def add_department(
 # ─── File Delete ──────────────────────────────────────────────────────────────
 
 @router.delete("/files/{file_id}", summary="Delete a file")
-async def delete_file(file_id: str, token: str = Depends(get_token)):
+async def delete_file(request: Request, file_id: str, token: str = Depends(get_token)):
     user = await auth_client.me(token)
     result = await file_client.delete_file(file_id=file_id)
 
@@ -345,7 +425,7 @@ async def delete_file(file_id: str, token: str = Depends(get_token)):
         actor=user["id"],
         action="FILE_DELETE",
         resource=file_id,
-        ip="gateway",
+        ip=request.client.host if request.client else "gateway",
         result="SUCCESS",
     )
 
