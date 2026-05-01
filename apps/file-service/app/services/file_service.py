@@ -16,7 +16,8 @@ def create_file(
     size: int,
     sha256: str,
     sensitivity: str = "INTERNAL",
-    status: str = "QUARANTINED",  # Default QUARANTINED — worker releases after clean scan
+    status: str = "QUARANTINED",
+    dek_wrapped: Optional[str] = None,
 ):
     file = File(
         owner_id=owner_id,
@@ -28,6 +29,7 @@ def create_file(
         sensitivity=sensitivity,
         status=status,
         risk_score=0,
+        dek_wrapped=dek_wrapped,
     )
     db.add(file)
     db.commit()

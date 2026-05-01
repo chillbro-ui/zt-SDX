@@ -1,4 +1,6 @@
 import hashlib
+import os
+import random
 import secrets
 from datetime import datetime, timedelta, timezone
 from typing import Optional, cast
@@ -7,6 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.core.cache import rdb
+from app.core.config import settings
 from app.core.db import get_db
 from app.models.credentials import Credentials
 from app.models.device import Device
@@ -63,6 +66,7 @@ def login(
     if user is None:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
+    # Check account status
     if user.status == "PENDING_ACTIVATION":
         raise HTTPException(
             status_code=403,
@@ -76,8 +80,33 @@ def login(
     if not user.password_hash:
         raise HTTPException(status_code=403, detail="Account not activated.")
 
+    # ── Login attempt tracking ────────────────────────────────────────────────
+    attempt_key = f"login_attempts:{str(user.id)}"
+    attempts = int(rdb.get(attempt_key) or 0)
+
     if not verify_password(password, str(user.password_hash)):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        # Increment failed attempts
+        new_count = attempts + 1
+        rdb.setex(attempt_key, 900, str(new_count))  # 15 min window
+
+        if new_count >= settings.MAX_LOGIN_ATTEMPTS:
+            # Lock the account
+            user.status = "SUSPENDED"
+            db.commit()
+            raise HTTPException(
+                status_code=403,
+                detail=f"Account locked after {settings.MAX_LOGIN_ATTEMPTS} failed attempts. Contact your administrator.",
+            )
+
+        remaining = settings.MAX_LOGIN_ATTEMPTS - new_count
+        raise HTTPException(
+            status_code=401,
+            detail=f"Invalid credentials. {remaining} attempt(s) remaining before lockout.",
+        )
+
+    # Successful login — clear failed attempts
+    rdb.delete(attempt_key)
+    # ─────────────────────────────────────────────────────────────────────────
 
     # Resolve client IP
     client_ip = request.client.host if request.client else "unknown"
@@ -107,15 +136,32 @@ def login(
         device_id = str(device.id)
         device_trusted = bool(device.trusted)
 
-    # Risk score placeholder — risk service will update this
-    risk_score = 10
+    # ── Login Risk Score (computed from available signals) ───────────────────
+    # This is the session-level risk score, separate from file-level risk.
+    # ML team will extend this with geo, time, and behavioral signals.
+    login_risk = 0
 
-    # Create session
+    # Signal: failed login attempts in this window
+    # Each previous failed attempt adds 15 points
+    login_risk += min(attempts * 15, 45)  # cap at 45 for attempts signal
+
+    # Signal: new / untrusted device
+    if device_fingerprint and not device_trusted:
+        login_risk += 25  # new or known-untrusted device
+
+    # Signal: no device fingerprint sent at all
+    if not device_fingerprint:
+        login_risk += 10  # unknown device context
+
+    # Clamp to 0-100
+    login_risk = min(login_risk, 100)
+
+    # Create session with computed risk score
     session = SessionModel(
         user_id=user.id,
         ip=client_ip,
         device_id=device_id,
-        risk_score=risk_score,
+        risk_score=login_risk,
         expires_at=datetime.now(timezone.utc) + timedelta(hours=8),
     )
     db.add(session)
@@ -129,6 +175,7 @@ def login(
         "role": user.role,
         "org_id": str(user.org_id) if user.org_id else None,
         "session_id": str(session.id),
+        "risk_score": login_risk,
     }
     access_token = create_access_token(token_data)
     refresh_token = create_refresh_token({"sub": str(user.id), "session_id": str(session.id)})
@@ -137,11 +184,52 @@ def login(
     refresh_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
     rdb.setex(f"refresh:{refresh_hash}", 28800, str(user.id))
 
+    # ── MFA Decision ──────────────────────────────────────────────────────────
+    # Trigger MFA if:
+    #   - mfa_enabled is manually set on the user, OR
+    #   - login risk score is in the MFA threshold range (30-59)
+    #   - risk >= 60 → DENY entirely
+    mfa_threshold = int(os.getenv("RISK_MFA_THRESHOLD", "30"))
+    deny_threshold = int(os.getenv("RISK_DENY_THRESHOLD", "60"))
+
+    if login_risk >= deny_threshold:
+        raise HTTPException(
+            status_code=403,
+            detail=f"Login blocked. Risk score {login_risk} exceeds threshold. Contact your administrator.",
+        )
+
+    trigger_mfa = user.mfa_enabled or (login_risk >= mfa_threshold)
+
+    if trigger_mfa:
+        otp = str(random.randint(100000, 999999))
+        challenge_id = secrets.token_urlsafe(16)
+        otp_ttl = settings.OTP_EXPIRY_SECONDS
+
+        rdb.setex(f"otp:{challenge_id}", otp_ttl, otp)
+        rdb.setex(f"otp_user:{challenge_id}", otp_ttl, str(user.id))
+        rdb.setex(f"otp_access:{challenge_id}", otp_ttl, access_token)
+        rdb.setex(f"otp_refresh:{challenge_id}", otp_ttl, refresh_token)
+
+        return {
+            "otp_required": True,
+            "challenge_id": challenge_id,
+            "otp": otp,  # Demo only — production sends via email/SMS
+            "expires_in_seconds": otp_ttl,
+            "risk_score": login_risk,
+            "user": {
+                "id": str(user.id),
+                "email": user.email,
+                "role": user.role,
+            },
+        }
+
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
         "expires_in": 900,
+        "otp_required": False,
+        "risk_score": login_risk,
         "user": {
             "id": str(user.id),
             "email": user.email,
@@ -158,41 +246,44 @@ def verify_otp(
     otp: str,
     db: Session = Depends(get_db),
 ):
-    # Placeholder — OTP delivery (TOTP/SMS/Email) is out of scope for this sprint
-    # challenge_id maps to a Redis key set during login MFA trigger
     stored = rdb.get(f"otp:{challenge_id}")
     if not stored or stored != otp:
         raise HTTPException(status_code=401, detail="Invalid or expired OTP")
 
-    rdb.delete(f"otp:{challenge_id}")
-
-    # Retrieve user_id stored alongside OTP
     user_id = rdb.get(f"otp_user:{challenge_id}")
     if not user_id:
         raise HTTPException(status_code=401, detail="Session expired")
 
-    user = get_user_by_id(db, user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    # Retrieve pre-generated tokens
+    access_token = rdb.get(f"otp_access:{challenge_id}")
+    refresh_token = rdb.get(f"otp_refresh:{challenge_id}")
 
-    token_data = {
-        "sub": str(user.id),
-        "email": user.email,
-        "role": user.role,
-        "org_id": str(user.org_id) if user.org_id else None,
-    }
-    access_token = create_access_token(token_data)
-    refresh_token = create_refresh_token({"sub": str(user.id)})
+    if not access_token or not refresh_token:
+        raise HTTPException(status_code=401, detail="Session expired — please log in again")
 
+    # Clean up OTP keys
+    rdb.delete(f"otp:{challenge_id}")
+    rdb.delete(f"otp_user:{challenge_id}")
+    rdb.delete(f"otp_access:{challenge_id}")
+    rdb.delete(f"otp_refresh:{challenge_id}")
+
+    # Store refresh token hash for rotation
     refresh_hash = hashlib.sha256(refresh_token.encode()).hexdigest()
-    rdb.setex(f"refresh:{refresh_hash}", 28800, str(user.id))
+    rdb.setex(f"refresh:{refresh_hash}", 28800, user_id)
+
+    user = get_user_by_id(db, user_id)
 
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
         "token_type": "bearer",
-        "risk_floor": 10,
         "expires_in": 900,
+        "user": {
+            "id": str(user.id) if user else user_id,
+            "email": user.email if user else None,
+            "role": user.role if user else None,
+            "org_id": str(user.org_id) if user and user.org_id else None,
+        },
     }
 
 

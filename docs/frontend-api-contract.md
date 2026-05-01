@@ -285,7 +285,7 @@ Activate account using code from provisioning.
 
 ### POST `/upload`
 
-Upload a file. Triggers async DLP scan.
+Upload a file. Triggers async DLP scan. File starts as `QUARANTINED` and is released to `ACTIVE` after a clean scan.
 
 **Headers:**
 ```
@@ -295,9 +295,28 @@ Content-Type: multipart/form-data
 
 **Request body (multipart/form-data):**
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `file` | file | ✅ | The file to upload |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `file` | file | ✅ | — | The file to upload |
+| `sensitivity` | string | ❌ | `INTERNAL` | `PUBLIC` \| `INTERNAL` \| `CONFIDENTIAL` \| `SECRET` |
+
+**Who can upload what:**
+
+| Role | PUBLIC | INTERNAL | CONFIDENTIAL | SECRET |
+|------|--------|----------|--------------|--------|
+| EMPLOYEE | ✅ | ✅ | ❌ | ❌ |
+| MANAGER | ✅ | ✅ | ❌ | ❌ |
+| DEPT_HEAD | ✅ | ✅ | ✅ | ❌ |
+| AUDITOR | ✅ | ✅ | ❌ | ❌ |
+| SECURITY_ADMIN | ✅ | ✅ | ✅ | ✅ |
+| SUPER_ADMIN | ✅ | ✅ | ✅ | ✅ |
+
+**Every upload goes through:**
+1. Policy check (role vs sensitivity)
+2. AES-256-GCM encryption before storage in MinIO
+3. SHA-256 digest stored for integrity verification
+4. Async DLP scan (PAN, Aadhaar, SSN, API keys, passwords)
+5. File released to `ACTIVE` only after clean scan
 
 **Response `200`:**
 
@@ -306,17 +325,22 @@ Content-Type: multipart/form-data
   "file": {
     "id": "uuid",
     "filename": "salary-sheet.xlsx",
-    "stored_name": "uuid-salary-sheet.xlsx",
+    "stored_name": "uuid-salary-sheet.xlsx.enc",
     "sha256": "abc123...",
-    "status": "ACTIVE"
+    "status": "QUARANTINED",
+    "encrypted": true
   },
   "message": "Upload successful. DLP scan queued."
 }
 ```
 
 **Errors:**
+- `400` — Invalid sensitivity value
 - `401` — Invalid token
-- `403` — Policy denied (`decision: DENY` or `MFA_REQUIRED`)
+- `403` — Role not allowed to upload this sensitivity level
+- `413` — File too large (max 100MB)
+- `415` — File type not allowed (pdf, docx, xlsx, png, jpg only)
+- `429` — Rate limit exceeded (30 uploads/min)
 
 ---
 

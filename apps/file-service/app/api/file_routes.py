@@ -5,10 +5,12 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional, cast
 
 from fastapi import APIRouter, Depends, File as UploadFileType, HTTPException, UploadFile
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.core.db import get_db
+from app.crypto.encryption import decrypt, encrypt, generate_dek, pack_dek_blob, unpack_dek_blob
 from app.services.file_service import (
     create_file,
     create_share,
@@ -19,7 +21,7 @@ from app.services.file_service import (
     update_risk,
     update_share_downloads,
 )
-from app.storage.minio_client import ensure_bucket, get_download_url, upload_file
+from app.storage.minio_client import ensure_bucket, get_file_bytes, upload_file
 
 router = APIRouter(prefix="/files", tags=["files"])
 
@@ -29,6 +31,7 @@ router = APIRouter(prefix="/files", tags=["files"])
 @router.post("/upload")
 async def upload(
     owner_id: str,
+    sensitivity: str = "INTERNAL",
     file: UploadFile = UploadFileType(...),
     db: Session = Depends(get_db),
 ):
@@ -50,11 +53,20 @@ async def upload(
             detail=f"File type '{ext}' not allowed. Allowed: {', '.join(settings.ALLOWED_FILE_TYPES)}",
         )
 
+    # SHA-256 of plaintext — stored for integrity verification on download
     sha256 = hashlib.sha256(content).hexdigest()
-    stored_name = f"{uuid.uuid4()}-{filename}"
+
+    # ── AES-256-GCM Encryption ────────────────────────────────────────────────
+    dek = generate_dek()
+    ciphertext, nonce = encrypt(content, dek)
+    dek_blob = pack_dek_blob(dek, nonce)
+    # ─────────────────────────────────────────────────────────────────────────
+
+    stored_name = f"{uuid.uuid4()}-{filename}.enc"
 
     ensure_bucket()
-    upload_file(object_name=stored_name, content=content, content_type=content_type)
+    # Store ciphertext — plaintext never written to MinIO
+    upload_file(object_name=stored_name, content=ciphertext, content_type="application/octet-stream")
 
     saved = create_file(
         db=db,
@@ -62,9 +74,11 @@ async def upload(
         filename=filename,
         stored_name=stored_name,
         mime_type=content_type,
-        size=len(content),
+        size=len(content),  # original plaintext size
         sha256=sha256,
         status="QUARANTINED",
+        dek_wrapped=dek_blob,
+        sensitivity=sensitivity.upper(),
     )
 
     return {
@@ -73,6 +87,7 @@ async def upload(
         "stored_name": cast(str, saved.stored_name),
         "sha256": cast(str, saved.sha256),
         "status": cast(str, saved.status),
+        "encrypted": True,
     }
 
 
@@ -114,6 +129,7 @@ def get_files(
                 "status": cast(str, f.status),
                 "risk_score": cast(int, f.risk_score),
                 "sha256": cast(str, f.sha256),
+                "encrypted": bool(f.dek_wrapped),
                 "created_at": cast(datetime, f.created_at).isoformat() if cast(Optional[datetime], f.created_at) else None,
             }
             for f in files
@@ -200,31 +216,50 @@ def download_via_share(
         raise HTTPException(status_code=403, detail="File is quarantined")
 
     update_share_downloads(db, str(share.id))
-    presigned_url = get_download_url(cast(str, file.stored_name))
 
-    share_watermark: Optional[str] = (
+    # ── Decrypt and stream ────────────────────────────────────────────────────
+    plaintext = _decrypt_file(file)
+    # ─────────────────────────────────────────────────────────────────────────
+
+    # Verify integrity
+    computed = hashlib.sha256(plaintext).hexdigest()
+    if computed != cast(str, file.sha256):
+        raise HTTPException(status_code=500, detail="INTEGRITY_FAILURE: file digest mismatch")
+
+    watermark_str: Optional[str] = (
         f"{share.recipient}|{str(share.id)}|{datetime.now(timezone.utc).isoformat()}"
         if bool(share.watermark)
         else None
     )
 
-    return {
-        "id": str(file.id),
-        "filename": cast(str, file.filename),
-        "download_url": presigned_url,
-        "sha256": cast(str, file.sha256),
-        "watermark": share_watermark,
-        "expires_in_seconds": 60,
+    headers = {
+        "Content-Disposition": f'attachment; filename="{cast(str, file.filename)}"',
+        "X-Watermark": watermark_str or "",
+        "X-SHA256": cast(str, file.sha256),
     }
+
+    return Response(
+        content=plaintext,
+        media_type=cast(str, file.mime_type) or "application/octet-stream",
+        headers=headers,
+    )
 
 
 # ─── Internal content URL (for worker DLP scan) ───────────────────────────────
 
 @router.get("/content/{stored_name}")
-def get_file_content_url(stored_name: str):
-    """Internal endpoint — worker fetches presigned URL by stored_name for DLP scanning."""
-    presigned_url = get_download_url(stored_name)
-    return {"download_url": presigned_url}
+def get_file_content_url(stored_name: str, db: Session = Depends(get_db)):
+    """
+    Internal endpoint — worker fetches decrypted bytes for DLP scanning.
+    Looks up file by stored_name, decrypts, returns raw bytes.
+    """
+    from app.models.file import File as FileModel
+    file = db.query(FileModel).filter(FileModel.stored_name == stored_name).first()
+    if file is None:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    plaintext = _decrypt_file(file)
+    return Response(content=plaintext, media_type="application/octet-stream")
 
 
 # ─── Single file ops — MUST be after /shares and /content ─────────────────────
@@ -244,6 +279,7 @@ def get_file_endpoint(file_id: str, db: Session = Depends(get_db)):
         "sensitivity": cast(str, file.sensitivity),
         "status": cast(str, file.status),
         "risk_score": cast(int, file.risk_score),
+        "encrypted": bool(file.dek_wrapped),
         "created_at": cast(datetime, file.created_at).isoformat() if cast(Optional[datetime], file.created_at) else None,
     }
 
@@ -267,17 +303,28 @@ def download_file(
             detail="File is quarantined pending DLP scan. Try again shortly.",
         )
 
-    presigned_url = get_download_url(cast(str, file.stored_name))
+    # ── Decrypt and stream ────────────────────────────────────────────────────
+    plaintext = _decrypt_file(file)
+    # ─────────────────────────────────────────────────────────────────────────
+
+    # Verify SHA-256 integrity before delivery
+    computed = hashlib.sha256(plaintext).hexdigest()
+    if computed != cast(str, file.sha256):
+        raise HTTPException(status_code=500, detail="INTEGRITY_FAILURE: file digest mismatch")
+
     watermark = f"{user_id}|{file_id}|{datetime.now(timezone.utc).isoformat()}"
 
-    return {
-        "id": str(file.id),
-        "filename": cast(str, file.filename),
-        "download_url": presigned_url,
-        "sha256": cast(str, file.sha256),
-        "watermark": watermark,
-        "expires_in_seconds": 60,
+    headers = {
+        "Content-Disposition": f'attachment; filename="{cast(str, file.filename)}"',
+        "X-Watermark": watermark,
+        "X-SHA256": cast(str, file.sha256),
     }
+
+    return Response(
+        content=plaintext,
+        media_type=cast(str, file.mime_type) or "application/octet-stream",
+        headers=headers,
+    )
 
 
 @router.delete("/{file_id}")
@@ -286,3 +333,21 @@ def delete_file_endpoint(file_id: str, db: Session = Depends(get_db)):
     if file is None:
         raise HTTPException(status_code=404, detail="File not found")
     return {"id": str(file.id), "message": "File deleted"}
+
+
+# ─── Internal helper ──────────────────────────────────────────────────────────
+
+def _decrypt_file(file) -> bytes:
+    """Fetch ciphertext from MinIO and decrypt with stored DEK."""
+    dek_blob = cast(Optional[str], file.dek_wrapped)
+    if not dek_blob:
+        # Legacy file without encryption — return raw bytes
+        return get_file_bytes(cast(str, file.stored_name))
+
+    ciphertext = get_file_bytes(cast(str, file.stored_name))
+    dek, nonce = unpack_dek_blob(dek_blob)
+
+    try:
+        return decrypt(ciphertext, dek, nonce)
+    except Exception:
+        raise HTTPException(status_code=500, detail="DECRYPTION_FAILURE: file could not be decrypted")

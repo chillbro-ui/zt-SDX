@@ -88,16 +88,37 @@ RISK_LOCK_THRESHOLD=85
 
 The stub currently returns a random score. The real implementation should compute score from these signals:
 
-| Signal | Score Delta | Trigger |
-|--------|-------------|---------|
-| New / unrecognised device | +25 | Device fingerprint not in DB |
-| Login at unusual hour | +20 | Outside 06:00–22:00 UTC for this user |
-| New geographic location | +30 | IP geolocation differs from usual |
-| Rapid bulk downloads | +40 | > 10 downloads in 2 minutes |
-| Multiple failed MFA attempts | +15 per attempt | Failed OTP verification |
-| Shared link forwarded to new device | +35 | Device fingerprint mismatch on share |
-| DLP quarantine triggered | +50 | DLP scanner flagged the file |
-| Normal behaviour (time decay) | -5 per hour | Score decays toward baseline |
+| Signal | Score Delta | Trigger | Implemented |
+|--------|-------------|---------|-------------|
+| New / unrecognised device | +25 | Device fingerprint not in DB | ✅ Auth-service (login) |
+| Failed login attempts | +15 per attempt | Wrong password | ✅ Auth-service (login) |
+| No device fingerprint | +10 | No fingerprint sent | ✅ Auth-service (login) |
+| Login at unusual hour | +20 | Outside 06:00–22:00 UTC for this user | ❌ ML team |
+| New geographic location | +30 | IP geolocation differs from usual | ❌ ML team |
+| Rapid bulk downloads | +40 | > 10 downloads in 2 minutes | ❌ ML team |
+| Multiple failed MFA attempts | +15 per attempt | Failed OTP verification | ❌ ML team |
+| Shared link forwarded to new device | +35 | Device fingerprint mismatch on share | ❌ ML team |
+| DLP quarantine triggered | +50 | DLP scanner flagged the file | ❌ ML team |
+| Normal behaviour (time decay) | -5 per hour | Score decays toward baseline | ❌ ML team |
+
+### Login Risk Score (already computed in auth-service)
+
+The auth-service computes a **session-level risk score** at login time from signals it already has:
+
+```python
+login_risk = 0
+login_risk += min(failed_attempts * 15, 45)  # failed attempts signal
+login_risk += 25  # if device_fingerprint sent but device not trusted
+login_risk += 10  # if no device fingerprint sent at all
+
+# Thresholds (from .env):
+# RISK_MFA_THRESHOLD=30  → trigger OTP challenge
+# RISK_DENY_THRESHOLD=60 → block login entirely
+```
+
+This score is stored in the `sessions` table and included in the JWT payload as `risk_score`.
+
+The **file-level risk score** (from `POST /risk/score`) is separate — it scores the file content and owner behavior, stored in `files.risk_score`, used by the policy engine for download decisions.
 
 ---
 

@@ -13,23 +13,13 @@ def update_risk(file_id: str, risk_score: int, status: str):
 
 def get_file_content(stored_name: str) -> bytes:
     """
-    Fetch raw file bytes from the file-service for DLP scanning.
-    The file-service returns a presigned MinIO URL; we then fetch the bytes.
+    Fetch decrypted file bytes from file-service for DLP scanning.
+    The file-service handles decryption internally.
     """
-    # Get presigned URL from file-service using stored_name
     response = requests.get(
         f"{FILE_URL}/files/content/{stored_name}",
-        timeout=10,
+        timeout=30,
     )
     if response.status_code != 200:
         return b""
-    data = response.json()
-    download_url = data.get("download_url", "")
-    if not download_url:
-        return b""
-
-    # Fetch actual bytes from MinIO presigned URL
-    file_response = requests.get(download_url, timeout=30)
-    if file_response.status_code != 200:
-        return b""
-    return file_response.content
+    return response.content

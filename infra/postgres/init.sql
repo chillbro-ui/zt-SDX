@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
     clearance_level INT DEFAULT 1,
     device_trust INT DEFAULT 0,
     risk_score INT DEFAULT 0,
-    mfa_enabled BOOLEAN DEFAULT TRUE,
+    mfa_enabled BOOLEAN DEFAULT FALSE,  -- Enabled by risk engine when plugged in
     status VARCHAR(32) DEFAULT 'ACTIVE',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -110,6 +110,9 @@ CREATE TABLE IF NOT EXISTS files (
     mime_type VARCHAR(128),
     size BIGINT,
     sha256 VARCHAR NOT NULL,
+    -- Envelope encryption: base64(nonce[12] + DEK[32])
+    -- In production: RSA-OAEP(KEK_pub, DEK) stored here
+    dek_wrapped VARCHAR,
     sensitivity VARCHAR(32) DEFAULT 'INTERNAL',
     status VARCHAR(32) DEFAULT 'QUARANTINED',
     risk_score INT DEFAULT 0,

@@ -44,6 +44,12 @@ class File(Base):
         nullable=False,
     )
 
+    # Envelope encryption — stores base64(nonce + DEK)
+    # In production this would be RSA-OAEP(KEK_pub, DEK)
+    dek_wrapped = Column(
+        String,
+    )
+
     sensitivity = Column(
         String(32),
         default="INTERNAL",

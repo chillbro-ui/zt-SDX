@@ -1,18 +1,19 @@
 from typing import Optional
 
 import httpx
+from fastapi.responses import Response
 
 from app.clients.config import FILE_URL
 
-# Large file uploads need a longer timeout — default 5s is too short for 100MB
-UPLOAD_TIMEOUT = 120.0  # 2 minutes
+# Large file uploads need a longer timeout
+UPLOAD_TIMEOUT = 120.0
 
 
-async def upload(owner_id: str, filename: str, content: bytes, content_type: str):
+async def upload(owner_id: str, filename: str, content: bytes, content_type: str, sensitivity: str = "INTERNAL"):
     async with httpx.AsyncClient(timeout=UPLOAD_TIMEOUT) as client:
         response = await client.post(
             f"{FILE_URL}/files/upload",
-            params={"owner_id": owner_id},
+            params={"owner_id": owner_id, "sensitivity": sensitivity},
             files={"file": (filename, content, content_type)},
         )
     return response.json()
@@ -34,12 +35,24 @@ async def get_file(file_id: str):
 
 
 async def download_file(file_id: str, user_id: str):
-    async with httpx.AsyncClient() as client:
+    """Download and decrypt file — returns a FastAPI Response to stream to client."""
+    async with httpx.AsyncClient(timeout=60.0) as client:
         response = await client.get(
             f"{FILE_URL}/files/{file_id}/download",
             params={"user_id": user_id},
         )
-    return response.json()
+    if response.status_code != 200:
+        return response.json()
+
+    return Response(
+        content=response.content,
+        media_type=response.headers.get("content-type", "application/octet-stream"),
+        headers={
+            "Content-Disposition": response.headers.get("content-disposition", ""),
+            "X-Watermark": response.headers.get("x-watermark", ""),
+            "X-SHA256": response.headers.get("x-sha256", ""),
+        },
+    )
 
 
 async def create_share(
@@ -66,9 +79,22 @@ async def create_share(
 
 
 async def download_via_share(share_token: str):
-    async with httpx.AsyncClient() as client:
+    """Download via share token — returns a FastAPI Response to stream to client."""
+    async with httpx.AsyncClient(timeout=60.0) as client:
         response = await client.get(f"{FILE_URL}/files/shares/{share_token}")
-    return response.json()
+
+    if response.status_code != 200:
+        return response.json()
+
+    return Response(
+        content=response.content,
+        media_type=response.headers.get("content-type", "application/octet-stream"),
+        headers={
+            "Content-Disposition": response.headers.get("content-disposition", ""),
+            "X-Watermark": response.headers.get("x-watermark", ""),
+            "X-SHA256": response.headers.get("x-sha256", ""),
+        },
+    )
 
 
 async def delete_file(file_id: str):

@@ -1,0 +1,41 @@
+
+=== test_email ===
+test_1777614426@acme.com
+
+=== health_gateway ===
+{"service":"gateway-api","status":"healthy","cors_origins":["http://localhost:5173"]}
+
+=== health_auth ===
+{"service":"auth-service","status":"healthy"}
+
+=== health_policy ===
+{"service":"policy-service","status":"healthy"}
+
+=== health_file ===
+
+
+=== health_audit ===
+{"service":"audit-service","status":"healthy"}
+
+=== health_risk ===
+{"service":"risk-service","status":"healthy"}
+
+=== health_alert ===
+{"service":"alert-service","status":"running"}
+
+=== seed_policies ===
+{"created":[],"skipped":["SUPER_ADMIN","SECURITY_ADMIN","DEPT_HEAD","MANAGER","EMPLOYEE","AUDITOR"]}
+
+=== register_admin ===
+{"id":"3aa91564-f811-4e2a-8ce6-58cd58008304","email":"admin_1777614427@acme.com","role":"SUPER_ADMIN","department":"security","status":"ACTIVE"}
+
+=== register_employee ===
+{"id":"0820477f-b2cc-4b00-ae8a-f129ed776b66","email":"test_1777614426@acme.com","role":"EMPLOYEE","department":"Engineering","status":"ACTIVE"}
+
+=== login_employee ===
+{"detail":"Rate limit exceeded. Max 10 requests per 60s. Try again later."}
+
+=== FAIL: login_failed ===
+{"detail":"Rate limit exceeded. Max 10 requests per 60s. Try again later."}
+
+ABORT: login failed

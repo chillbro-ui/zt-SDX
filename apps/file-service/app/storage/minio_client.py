@@ -34,3 +34,13 @@ def upload_file(object_name: str, content: bytes, content_type: str):
 
 def get_download_url(object_name: str) -> str:
     return client.presigned_get_object(BUCKET, object_name)
+
+
+def get_file_bytes(object_name: str) -> bytes:
+    """Fetch raw bytes from MinIO — used for decryption and DLP scanning."""
+    response = client.get_object(BUCKET, object_name)
+    try:
+        return response.read()
+    finally:
+        response.close()
+        response.release_conn()

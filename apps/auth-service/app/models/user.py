@@ -31,7 +31,7 @@ class User(Base):
     device_trust = Column(Integer, default=0)
     risk_score = Column(Integer, default=0)
 
-    mfa_enabled = Column(Boolean, default=True)
+    mfa_enabled = Column(Boolean, default=False)  # Enabled by risk engine when plugged in
     status = Column(String, default="ACTIVE")
 
     created_at = Column(DateTime, server_default=func.now())
